@@ -1,8 +1,10 @@
 # ECore Agents
 
-ECore Agents es el proyecto académico de la materia **Negocios Electrónicos 2**. Continúa conceptualmente el frontend elaborado para Negocios Electrónicos 1, pero comienza como una aplicación Laravel nueva e independiente.
+ECore Agents es el proyecto académico de la materia **Negocios Electrónicos 2**. Continúa conceptualmente el frontend elaborado para Negocios Electrónicos 1, pero se desarrolla como una aplicación Laravel nueva e independiente.
 
-Esta etapa contiene únicamente la fundación técnica del proyecto. Todavía no incluye CRM, modelos comerciales, APIs, roles ni la migración del frontend anterior.
+La Etapa 1 establece la base visual en Laravel + Blade: layout compartido, home, catálogo, detalles de planes, agente personalizado, vistas de acceso y perfil, y un shell administrativo representativo.
+
+Todavía no existe backend funcional de negocio. La autenticación real, el CRM, sus validaciones, permisos, modelos y API se implementarán posteriormente. Los formularios y datos visibles en esta etapa son demostrativos y están identificados como tales.
 
 ## Stack actual
 

@@ -7,13 +7,36 @@ use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
-    /**
-     * A basic test example.
-     */
-    public function test_the_application_returns_a_successful_response(): void
+    public function test_visual_foundation_pages_are_available(): void
     {
-        $response = $this->get('/');
+        $routes = [
+            route('home'),
+            route('plans.index'),
+            route('plans.custom'),
+            route('login'),
+            route('register'),
+            route('profile'),
+            route('admin'),
+        ];
 
-        $response->assertStatus(200);
+        foreach ($routes as $route) {
+            $this->get($route)
+                ->assertOk()
+                ->assertSee('ECore Agents');
+        }
+    }
+
+    public function test_each_existing_plan_uses_the_shared_detail_view(): void
+    {
+        foreach (['inicio', 'plus', 'avanzado'] as $plan) {
+            $this->get(route('plans.show', $plan))
+                ->assertOk()
+                ->assertViewIs('plans.show');
+        }
+    }
+
+    public function test_an_unknown_plan_returns_not_found(): void
+    {
+        $this->get(route('plans.show', 'inexistente'))->assertNotFound();
     }
 }
