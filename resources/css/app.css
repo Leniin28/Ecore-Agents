@@ -1,0 +1,36 @@
+:root {
+    font-family: Arial, sans-serif;
+    color: #1f2937;
+    background: #f3f4f6;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    margin: 0;
+    display: grid;
+    place-items: center;
+}
+
+.welcome-card {
+    width: min(90%, 640px);
+    padding: 2.5rem;
+    border: 1px solid #dbe3ee;
+    border-radius: 0.75rem;
+    background: #ffffff;
+    box-shadow: 0 0.75rem 2rem rgba(31, 41, 55, 0.08);
+    text-align: center;
+}
+
+.welcome-card h1 {
+    margin: 0 0 1rem;
+    color: #226ee8;
+}
+
+.welcome-card p {
+    margin: 0.5rem 0;
+    line-height: 1.6;
+}
