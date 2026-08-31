@@ -33,6 +33,9 @@ h1, h2, h3 { color: var(--blue-dark); }
 .site-nav { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 4px 16px; }
 .site-nav a { padding: 8px 0; color: #fff; border-bottom: 2px solid transparent; font-size: 0.9rem; font-weight: 700; text-decoration: none; transition: border-color 160ms ease; }
 .site-nav a:hover, .site-nav a:focus-visible, .site-nav a[aria-current="page"] { border-bottom-color: #fff; }
+.nav-logout-form { margin: 0; }
+.nav-logout-button { padding: 8px 0; color: #fff; background: transparent; border: 0; border-bottom: 2px solid transparent; cursor: pointer; font-size: .9rem; font-weight: 700; }
+.nav-logout-button:hover, .nav-logout-button:focus-visible { border-bottom-color: #fff; }
 .site-footer { padding: 24px 20px; color: #fff; background: #2471ee; text-align: center; }
 .site-footer p { margin: 0 0 8px; }
 .policy-link { padding: 0; color: #fff; background: transparent; border: 0; cursor: pointer; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
@@ -68,6 +71,8 @@ h1, h2, h3 { color: var(--blue-dark); }
 .form-card input:focus, .form-card textarea:focus, .auth-form input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(34,110,232,.14); }
 .form-card .button, .auth-form .button { margin-top: 8px; }
 .form-message { min-height: 22px; margin: 4px 0 0; color: var(--success); font-weight: 800; line-height: 1.5; }
+.field-error { margin: -3px 0 4px; color: #b42318; font-size: .88rem; font-weight: 700; }
+.auth-form input[aria-invalid="true"] { border-color: #d92d20; }
 .testimonial-list { display: grid; gap: 18px; }
 .testimonial-card p { margin-top: 0; color: #34435b; font-size: 1.05rem; }
 .testimonial-card strong { color: var(--blue-dark); }

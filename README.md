@@ -2,9 +2,9 @@
 
 ECore Agents es el proyecto académico de la materia **Negocios Electrónicos 2**. Continúa conceptualmente el frontend elaborado para Negocios Electrónicos 1, pero se desarrolla como una aplicación Laravel nueva e independiente.
 
-La Etapa 1 establece la base visual en Laravel + Blade: layout compartido, home, catálogo, detalles de planes, agente personalizado, vistas de acceso y perfil, y un shell administrativo representativo.
+La Etapa 1 estableció la base visual en Laravel + Blade. La Etapa 2 incorpora registro, login, logout y perfil mediante sesiones Laravel, además de los roles básicos `admin` y `usuario`.
 
-Todavía no existe backend funcional de negocio. La autenticación real, el CRM, sus validaciones, permisos, modelos y API se implementarán posteriormente. Los formularios y datos visibles en esta etapa son demostrativos y están identificados como tales.
+Todavía no existe CRM ni backend funcional de negocio. Los planes, compras, interacciones y demás módulos comerciales continúan como contenido visual o pendiente.
 
 ## Stack actual
 
@@ -36,11 +36,26 @@ npm run build
 
 En macOS o Linux, sustituye `copy .env.example .env` por `cp .env.example .env`.
 
-La configuración inicial utiliza SQLite. Si `database/database.sqlite` no existe, créalo antes de ejecutar las migraciones.
+La configuración inicial utiliza SQLite. Si `database/database.sqlite` no existe, créalo antes de ejecutar las migraciones y el seeder local.
 
 ```bash
-php artisan migrate
+php artisan migrate --seed
 ```
+
+Para reconstruir completamente una base local sin datos que deban conservarse:
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+## Administrador demo local
+
+El seeder crea un administrador únicamente cuando `APP_ENV=local`:
+
+- Correo: `admin@ecore.local`
+- Contraseña: `ECoreDemo2026!`
+
+Estas credenciales son exclusivamente académicas y locales. Deben eliminarse o sustituirse antes de cualquier despliegue real; el seeder se omite automáticamente fuera del entorno local.
 
 ## Ejecución local
 

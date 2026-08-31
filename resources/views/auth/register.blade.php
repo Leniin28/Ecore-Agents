@@ -6,19 +6,29 @@
 @section('content')
     <section class="auth-section">
         <article class="auth-card">
-            <span class="section-eyebrow">Próxima etapa</span>
+            <span class="section-eyebrow">Cuenta personal</span>
             <h1>Crear cuenta</h1>
-            <p class="demo-notice">Formulario visual preparado para la autenticación real. No crea usuarios ni simula una sesión.</p>
-            <form class="auth-form" method="post" action="#" data-demo-form data-demo-message="Registro no disponible en la Etapa 1. No se enviaron ni guardaron datos.">
+            <p class="demo-notice">Regístrate para acceder a tu perfil. Todas las cuentas públicas se crean con el rol usuario.</p>
+            <form class="auth-form" method="post" action="{{ route('register') }}">
                 @csrf
                 <label for="register-name">Nombre</label>
-                <input id="register-name" name="name" type="text" autocomplete="name">
+                <input id="register-name" name="name" type="text" value="{{ old('name') }}" autocomplete="name" required autofocus @error('name') aria-invalid="true" @enderror>
+                @error('name')
+                    <p class="field-error">{{ $message }}</p>
+                @enderror
                 <label for="register-email">Correo electrónico</label>
-                <input id="register-email" name="email" type="email" autocomplete="email">
+                <input id="register-email" name="email" type="email" value="{{ old('email') }}" autocomplete="email" required @error('email') aria-invalid="true" @enderror>
+                @error('email')
+                    <p class="field-error">{{ $message }}</p>
+                @enderror
                 <label for="register-password">Contraseña</label>
-                <input id="register-password" name="password" type="password" autocomplete="new-password">
-                <button class="button" type="submit">Registrarme (próximamente)</button>
-                <p class="form-message" data-form-message role="status" aria-live="polite"></p>
+                <input id="register-password" name="password" type="password" autocomplete="new-password" required @error('password') aria-invalid="true" @enderror>
+                @error('password')
+                    <p class="field-error">{{ $message }}</p>
+                @enderror
+                <label for="register-password-confirmation">Confirmar contraseña</label>
+                <input id="register-password-confirmation" name="password_confirmation" type="password" autocomplete="new-password" required>
+                <button class="button" type="submit">Registrarme</button>
             </form>
             <p class="auth-link">¿Ya tienes cuenta? <a href="{{ route('login') }}">Ir a iniciar sesión</a></p>
         </article>

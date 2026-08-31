@@ -16,10 +16,20 @@
                 <a href="{{ route('plans.index') }}" @if(request()->routeIs('plans.index', 'plans.show')) aria-current="page" @endif>Planes</a>
                 <a href="{{ route('plans.custom') }}" @if(request()->routeIs('plans.custom')) aria-current="page" @endif>Personalizado</a>
                 <a href="{{ route('home') }}#contact">Contacto</a>
-                <a href="{{ route('login') }}" @if(request()->routeIs('login')) aria-current="page" @endif>Iniciar sesión</a>
-                <a href="{{ route('register') }}" @if(request()->routeIs('register')) aria-current="page" @endif>Registro</a>
-                <a href="{{ route('profile') }}" @if(request()->routeIs('profile')) aria-current="page" @endif>Perfil demo</a>
-                <a href="{{ route('admin') }}" @if(request()->routeIs('admin')) aria-current="page" @endif>Admin demo</a>
+                @guest
+                    <a href="{{ route('login') }}" @if(request()->routeIs('login')) aria-current="page" @endif>Iniciar sesión</a>
+                    <a href="{{ route('register') }}" @if(request()->routeIs('register')) aria-current="page" @endif>Registro</a>
+                @endguest
+                @auth
+                    <a href="{{ route('profile') }}" @if(request()->routeIs('profile')) aria-current="page" @endif>Perfil</a>
+                    @if(auth()->user()->isAdmin())
+                        <a href="{{ route('admin') }}" @if(request()->routeIs('admin')) aria-current="page" @endif>Administración</a>
+                    @endif
+                    <form class="nav-logout-form" method="post" action="{{ route('logout') }}">
+                        @csrf
+                        <button class="nav-logout-button" type="submit">Cerrar sesión</button>
+                    </form>
+                @endauth
             </nav>
         </header>
 
@@ -36,9 +46,9 @@
             <button class="modal-backdrop" type="button" data-policy-close aria-label="Cerrar políticas"></button>
             <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="policy-title">
                 <button class="modal-close" type="button" data-policy-close aria-label="Cerrar">&times;</button>
-                <span class="section-eyebrow">Etapa 1</span>
+                <span class="section-eyebrow">Etapa 2</span>
                 <h2 id="policy-title">Demostración académica</h2>
-                <p>Esta base visual no procesa pagos, no inicia sesiones y no almacena datos de negocio. La autenticación y el CRM se implementarán en etapas posteriores.</p>
+                <p>La autenticación utiliza sesiones Laravel. El proyecto todavía no procesa pagos ni almacena datos de CRM o de operación comercial.</p>
                 <button class="button" type="button" data-policy-close>Entendido</button>
             </section>
         </div>

@@ -15,8 +15,6 @@ class ExampleTest extends TestCase
             route('plans.custom'),
             route('login'),
             route('register'),
-            route('profile'),
-            route('admin'),
         ];
 
         foreach ($routes as $route) {
