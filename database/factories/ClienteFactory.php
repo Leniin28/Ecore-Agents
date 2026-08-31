@@ -19,6 +19,7 @@ class ClienteFactory extends Factory
             'empresa' => fake()->optional()->company(),
             'fecha_registro' => fake()->dateTimeBetween('-1 year', 'now'),
             'estado' => Cliente::ESTADO_ACTIVO,
+            'etapa_crm' => Cliente::ETAPA_PROSPECTO,
         ];
     }
 

@@ -19,6 +19,7 @@ class ClienteController extends Controller
             'clientes' => $this->filteredQuery($request)->get(),
             'buscar' => $request->string('buscar')->trim()->toString(),
             'estado' => $request->string('estado')->toString(),
+            'etapaCrm' => $request->string('etapa_crm')->toString(),
         ]);
     }
 
@@ -40,6 +41,13 @@ class ClienteController extends Controller
 
     public function show(Cliente $cliente): View
     {
+        $cliente->load([
+            'interacciones' => fn ($query) => $query
+                ->with('usuario')
+                ->orderByDesc('fecha')
+                ->orderByDesc('id'),
+        ]);
+
         return view('clientes.show', compact('cliente'));
     }
 
@@ -65,6 +73,14 @@ class ClienteController extends Controller
             ->with('success', 'Cliente eliminado correctamente.');
     }
 
+    public function updateEtapa(Request $request, Cliente $cliente): RedirectResponse
+    {
+        $cliente->update($this->validateEtapa($request));
+
+        return redirect()->route('clientes.show', $cliente)
+            ->with('success', 'Etapa CRM actualizada correctamente.');
+    }
+
     public function apiIndex(Request $request): JsonResponse
     {
         return response()->json([
@@ -79,7 +95,7 @@ class ClienteController extends Controller
             'fecha_registro' => now()->toDateString(),
         ]);
 
-        return response()->json(['data' => $this->serializeCliente($cliente)], 201);
+        return response()->json(['data' => $this->serializeCliente($cliente->fresh())], 201);
     }
 
     public function apiShow(Cliente $cliente): JsonResponse
@@ -102,10 +118,18 @@ class ClienteController extends Controller
         return response()->noContent();
     }
 
+    public function apiUpdateEtapa(Request $request, Cliente $cliente): JsonResponse
+    {
+        $cliente->update($this->validateEtapa($request));
+
+        return response()->json(['data' => $this->serializeCliente($cliente->fresh())]);
+    }
+
     private function filteredQuery(Request $request): Builder
     {
         $buscar = $request->string('buscar')->trim()->toString();
         $estado = $request->string('estado')->toString();
+        $etapaCrm = $request->string('etapa_crm')->toString();
 
         return Cliente::query()
             ->when($buscar, function (Builder $query, string $buscar): void {
@@ -118,6 +142,10 @@ class ClienteController extends Controller
             ->when(
                 in_array($estado, [Cliente::ESTADO_ACTIVO, Cliente::ESTADO_INACTIVO], true),
                 fn (Builder $query) => $query->where('estado', $estado),
+            )
+            ->when(
+                array_key_exists($etapaCrm, Cliente::etapasCrm()),
+                fn (Builder $query) => $query->where('etapa_crm', $etapaCrm),
             )
             ->orderBy('nombre');
     }
@@ -157,6 +185,20 @@ class ClienteController extends Controller
     }
 
     /**
+     * @return array{etapa_crm: string}
+     */
+    private function validateEtapa(Request $request): array
+    {
+        return $request->validate(
+            ['etapa_crm' => ['required', Rule::in(array_keys(Cliente::etapasCrm()))]],
+            [
+                'etapa_crm.required' => 'La etapa CRM es obligatoria.',
+                'etapa_crm.in' => 'La etapa CRM seleccionada no es válida.',
+            ],
+        );
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function serializeCliente(Cliente $cliente): array
@@ -169,6 +211,7 @@ class ClienteController extends Controller
             'empresa' => $cliente->empresa,
             'fecha_registro' => $cliente->fecha_registro->format('Y-m-d'),
             'estado' => $cliente->estado,
+            'etapa_crm' => $cliente->etapa_crm,
             'created_at' => $cliente->created_at?->toISOString(),
             'updated_at' => $cliente->updated_at?->toISOString(),
         ];

@@ -4,15 +4,19 @@ ECore Agents es el proyecto académico de la materia **Negocios Electrónicos 2*
 
 La Etapa 1 estableció la base visual en Laravel + Blade. La Etapa 2 incorpora registro, login, logout y perfil mediante sesiones Laravel, además de los roles básicos `admin` y `usuario`.
 
-Todavía no existe un CRM completo. Los planes, compras, interacciones y demás módulos comerciales continúan como contenido visual o pendiente.
-
 La Etapa 3 incorpora el primer módulo real del CRM: gestión de clientes con nombre, correo, teléfono, empresa, fecha de registro y estado. Incluye CRUD Blade, búsqueda por nombre/correo/empresa, filtro por estado y endpoints REST que utilizan autenticación por sesión Laravel.
 
-Los roles `admin` y `usuario` pueden consultar, crear y editar clientes. Solamente `admin` puede eliminarlos. Las interacciones y métricas CRM todavía no están implementadas.
+La Etapa 4 agrega las etapas CRM `prospecto`, `activo`, `frecuente` e `inactivo`, además del registro de llamadas, correos y reuniones. Cada interacción conserva su fecha, cliente y usuario responsable, y aparece en el historial centralizado del cliente.
 
-## API REST de clientes
+Los roles `admin` y `usuario` pueden consultar, crear y editar clientes, cambiar su etapa y registrar interacciones. Solamente `admin` puede eliminar clientes. El CRM todavía no está terminado: las métricas y la pantalla Mi actividad continúan pendientes.
 
-Los endpoints `GET`, `POST`, `PUT` y `DELETE` bajo `/api/clientes` consultan y persisten clientes mediante Eloquent. Permanecen dentro de la aplicación monolítica y están protegidos por la sesión Laravel existente; las operaciones que modifican datos también requieren el token CSRF de la sesión web. No se utiliza JWT, Sanctum ni otro paquete de autenticación.
+## API REST del CRM
+
+Los endpoints `GET`, `POST`, `PUT` y `DELETE` bajo `/api/clientes` consultan y persisten clientes mediante Eloquent. La respuesta de cada cliente incluye `etapa_crm` y la etapa puede actualizarse con `PUT /api/clientes/{cliente}/etapa`.
+
+Las interacciones se consultan con `GET /api/clientes/{cliente}/interacciones` y se registran con `POST /api/interacciones`. El usuario responsable se obtiene siempre de la sesión autenticada.
+
+Los endpoints permanecen dentro de la aplicación monolítica y están protegidos por la sesión Laravel existente; las operaciones que modifican datos también requieren el token CSRF de la sesión web. No se utiliza JWT, Sanctum ni otro paquete de autenticación.
 
 ## Stack actual
 

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\InteraccionController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -41,6 +42,9 @@ Route::middleware('auth')->group(function () {
     Route::view('/admin', 'admin.index')->middleware('admin')->name('admin');
 
     Route::resource('clientes', ClienteController::class);
+    Route::put('/clientes/{cliente}/etapa', [ClienteController::class, 'updateEtapa'])->name('clientes.etapa.update');
+    Route::get('/clientes/{cliente}/interacciones', [InteraccionController::class, 'index'])->name('clientes.interacciones.index');
+    Route::post('/interacciones', [InteraccionController::class, 'store'])->name('interacciones.store');
 
     Route::prefix('api')->name('api.')->group(function () {
         Route::get('/clientes', [ClienteController::class, 'apiIndex'])->name('clientes.index');
@@ -48,5 +52,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/clientes/{cliente}', [ClienteController::class, 'apiShow'])->name('clientes.show');
         Route::put('/clientes/{cliente}', [ClienteController::class, 'apiUpdate'])->name('clientes.update');
         Route::delete('/clientes/{cliente}', [ClienteController::class, 'apiDestroy'])->name('clientes.destroy');
+        Route::put('/clientes/{cliente}/etapa', [ClienteController::class, 'apiUpdateEtapa'])->name('clientes.etapa.update');
+        Route::get('/clientes/{cliente}/interacciones', [InteraccionController::class, 'apiIndex'])->name('clientes.interacciones.index');
+        Route::post('/interacciones', [InteraccionController::class, 'apiStore'])->name('interacciones.store');
     });
 });

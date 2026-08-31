@@ -18,7 +18,7 @@
                 <div class="admin-section-heading"><div><span class="section-eyebrow">Vista general</span><h2>Dashboard</h2></div><p>Las métricas CRM se incorporarán en una etapa posterior.</p></div>
                 <div class="admin-summary-grid">
                     <article class="admin-summary-card"><span>Clientes</span><strong>CRUD disponible</strong><small>Persistencia SQLite</small></article>
-                    <article class="admin-summary-card"><span>Interacciones</span><strong>Pendiente</strong><small>Próxima etapa</small></article>
+                    <article class="admin-summary-card"><span>Interacciones</span><strong>En clientes</strong><small>Historial CRM</small></article>
                     <article class="admin-summary-card"><span>Métricas</span><strong>Sin implementar</strong><small>Fuera del alcance actual</small></article>
                     <article class="admin-summary-card"><span>API</span><strong>REST disponible</strong><small>Protegida por sesión</small></article>
                 </div>

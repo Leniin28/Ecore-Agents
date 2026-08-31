@@ -26,8 +26,9 @@
             <form class="customer-filters" method="get" action="{{ route('clientes.index') }}">
                 <div><label for="buscar">Buscar</label><input id="buscar" name="buscar" type="search" value="{{ $buscar }}" placeholder="Nombre, correo o empresa"></div>
                 <div><label for="estado">Estado</label><select id="estado" name="estado"><option value="">Todos</option><option value="activo" @selected($estado === 'activo')>Activo</option><option value="inactivo" @selected($estado === 'inactivo')>Inactivo</option></select></div>
+                <div><label for="etapa_crm">Etapa CRM</label><select id="etapa_crm" name="etapa_crm"><option value="">Todas</option>@foreach(\App\Models\Cliente::etapasCrm() as $value => $label)<option value="{{ $value }}" @selected($etapaCrm === $value)>{{ $label }}</option>@endforeach</select></div>
                 <button class="button" type="submit">Aplicar filtros</button>
-                @if($buscar || $estado)
+                @if($buscar || $estado || $etapaCrm)
                     <a class="back-button" href="{{ route('clientes.index') }}">Limpiar</a>
                 @endif
             </form>
@@ -37,7 +38,7 @@
             @else
                 <div class="customer-table-wrap">
                     <table class="customer-table">
-                        <thead><tr><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Empresa</th><th>Registro</th><th>Estado</th><th>Acciones</th></tr></thead>
+                        <thead><tr><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Empresa</th><th>Registro</th><th>Estado</th><th>Etapa CRM</th><th>Acciones</th></tr></thead>
                         <tbody>
                             @foreach($clientes as $cliente)
                                 <tr>
@@ -47,6 +48,7 @@
                                     <td>{{ $cliente->empresa ?: 'Sin empresa' }}</td>
                                     <td>{{ $cliente->fecha_registro->format('d/m/Y') }}</td>
                                     <td><span class="status-badge status-{{ $cliente->estado }}">{{ ucfirst($cliente->estado) }}</span></td>
+                                    <td><span class="stage-badge stage-{{ $cliente->etapa_crm }}">{{ $cliente->etapaCrmLabel() }}</span></td>
                                     <td class="table-actions">
                                         <a href="{{ route('clientes.show', $cliente) }}">Ver</a>
                                         <a href="{{ route('clientes.edit', $cliente) }}">Editar</a>

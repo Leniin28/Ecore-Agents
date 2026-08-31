@@ -81,7 +81,8 @@ class ClienteManagementTest extends TestCase
             ->get(route('clientes.show', $cliente))
             ->assertOk()
             ->assertSee($cliente->nombre)
-            ->assertSee('Las interacciones se implementarán en la siguiente etapa.');
+            ->assertSee('Historial de interacciones')
+            ->assertSee('Registrar interacción');
     }
 
     public function test_authenticated_user_can_update_customer_and_keep_own_email(): void
@@ -175,7 +176,8 @@ class ClienteManagementTest extends TestCase
             ->getJson(route('api.clientes.index'))
             ->assertOk()
             ->assertJsonPath('data.0.id', $cliente->id)
-            ->assertJsonPath('data.0.correo', $cliente->correo);
+            ->assertJsonPath('data.0.correo', $cliente->correo)
+            ->assertJsonPath('data.0.etapa_crm', Cliente::ETAPA_PROSPECTO);
     }
 
     public function test_customer_api_creates_customer(): void
@@ -186,7 +188,8 @@ class ClienteManagementTest extends TestCase
             ->postJson(route('api.clientes.store'), $this->validData())
             ->assertCreated()
             ->assertJsonPath('data.correo', 'cliente.qa@example.com')
-            ->assertJsonPath('data.fecha_registro', now()->toDateString());
+            ->assertJsonPath('data.fecha_registro', now()->toDateString())
+            ->assertJsonPath('data.etapa_crm', Cliente::ETAPA_PROSPECTO);
 
         $this->assertDatabaseHas('clientes', ['correo' => 'cliente.qa@example.com']);
     }
