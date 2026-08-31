@@ -22,6 +22,7 @@
                 @endguest
                 @auth
                     <a href="{{ route('profile') }}" @if(request()->routeIs('profile')) aria-current="page" @endif>Perfil</a>
+                    <a href="{{ route('clientes.index') }}" @if(request()->routeIs('clientes.*')) aria-current="page" @endif>Clientes</a>
                     @if(auth()->user()->isAdmin())
                         <a href="{{ route('admin') }}" @if(request()->routeIs('admin')) aria-current="page" @endif>Administración</a>
                     @endif

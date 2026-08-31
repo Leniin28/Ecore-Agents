@@ -22,6 +22,14 @@ document.querySelectorAll('[data-demo-action]').forEach((button) => {
     });
 });
 
+document.querySelectorAll('[data-confirm-delete]').forEach((form) => {
+    form.addEventListener('submit', (event) => {
+        if (! window.confirm(form.dataset.confirmDelete)) {
+            event.preventDefault();
+        }
+    });
+});
+
 const filterLabels = {
     all: 'Mostrando todos los planes',
     basic: 'Mostrando el plan de atención básica',
@@ -106,24 +114,6 @@ if (customBuilder) {
 
     renderCustomSummary();
 }
-
-document.querySelectorAll('[data-admin-target]').forEach((button) => {
-    button.addEventListener('click', () => {
-        const target = button.dataset.adminTarget;
-
-        document.querySelectorAll('[data-admin-target]').forEach((menuButton) => {
-            const isActive = menuButton === button;
-            menuButton.classList.toggle('is-active', isActive);
-            menuButton.setAttribute('aria-pressed', String(isActive));
-        });
-
-        document.querySelectorAll('[data-admin-section]').forEach((section) => {
-            const isActive = section.dataset.adminSection === target;
-            section.hidden = !isActive;
-            section.classList.toggle('is-active', isActive);
-        });
-    });
-});
 
 const policyModal = document.querySelector('[data-policy-modal]');
 

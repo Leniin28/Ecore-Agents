@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -38,4 +39,14 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
     Route::view('/admin', 'admin.index')->middleware('admin')->name('admin');
+
+    Route::resource('clientes', ClienteController::class);
+
+    Route::prefix('api')->name('api.')->group(function () {
+        Route::get('/clientes', [ClienteController::class, 'apiIndex'])->name('clientes.index');
+        Route::post('/clientes', [ClienteController::class, 'apiStore'])->name('clientes.store');
+        Route::get('/clientes/{cliente}', [ClienteController::class, 'apiShow'])->name('clientes.show');
+        Route::put('/clientes/{cliente}', [ClienteController::class, 'apiUpdate'])->name('clientes.update');
+        Route::delete('/clientes/{cliente}', [ClienteController::class, 'apiDestroy'])->name('clientes.destroy');
+    });
 });
