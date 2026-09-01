@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\ClienteController;
+use App\Http\Controllers\CrmDashboardController;
 use App\Http\Controllers\InteraccionController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -39,7 +40,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/perfil', [ProfileController::class, 'show'])->name('profile');
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-    Route::view('/admin', 'admin.index')->middleware('admin')->name('admin');
+    Route::get('/admin', [CrmDashboardController::class, 'index'])->name('admin');
+    Route::get('/mi-actividad', [CrmDashboardController::class, 'miActividad'])->name('mi-actividad');
 
     Route::resource('clientes', ClienteController::class);
     Route::put('/clientes/{cliente}/etapa', [ClienteController::class, 'updateEtapa'])->name('clientes.etapa.update');
@@ -47,6 +49,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/interacciones', [InteraccionController::class, 'store'])->name('interacciones.store');
 
     Route::prefix('api')->name('api.')->group(function () {
+        Route::get('/crm/metricas', [CrmDashboardController::class, 'apiMetricas'])->name('crm.metricas');
         Route::get('/clientes', [ClienteController::class, 'apiIndex'])->name('clientes.index');
         Route::post('/clientes', [ClienteController::class, 'apiStore'])->name('clientes.store');
         Route::get('/clientes/{cliente}', [ClienteController::class, 'apiShow'])->name('clientes.show');

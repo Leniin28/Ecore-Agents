@@ -308,6 +308,34 @@ h1, h2, h3 { color: var(--blue-dark); }
 .type-correo { color: #6941c6; background: #f0eaff; }
 .type-reunion { color: #9a3412; background: #ffeadb; }
 
+/* CRM dashboard and personal activity */
+.dashboard-content, .activity-content { display: grid; align-content: start; gap: 24px; }
+.crm-summary-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.dashboard-panel { padding: 24px; background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 8px 24px rgba(32,50,82,.05); }
+.dashboard-panel-heading { margin-bottom: 20px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.dashboard-panel-heading h2 { margin: 4px 0 0; font-size: 1.35rem; }
+.dashboard-panel-heading > span { padding: 6px 10px; color: var(--blue-dark); background: #eaf2ff; border-radius: 999px; font-size: .78rem; font-weight: 900; white-space: nowrap; }
+.dashboard-empty { margin: 0; padding: 22px; color: var(--muted); background: #f7f9fc; border-radius: 12px; text-align: center; }
+.crm-bar-chart { display: grid; gap: 18px; }
+.crm-bar-row { display: grid; gap: 8px; }
+.crm-bar-label { display: flex; justify-content: space-between; gap: 16px; color: #44506a; }
+.crm-bar-track { height: 16px; overflow: hidden; background: #e9eef6; border-radius: 999px; }
+.crm-bar-fill { min-width: 0; height: 100%; display: block; border-radius: inherit; }
+.bar-active { background: #22a06b; }
+.bar-inactive { background: #e0524d; }
+.dashboard-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+.dashboard-list { display: grid; gap: 10px; }
+.dashboard-list-item { padding: 14px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; background: #f8faff; border: 1px solid var(--line); border-radius: 12px; }
+.dashboard-list-item div { display: grid; gap: 3px; }
+.dashboard-list-item a, .activity-ranking a, .activity-table a { color: var(--blue-dark); font-weight: 900; text-decoration: none; }
+.dashboard-list-item > small { grid-column: 1 / -1; color: var(--muted); }
+.dashboard-list-item div small { color: var(--muted); }
+.activity-ranking { margin: 0; padding-left: 24px; display: grid; gap: 10px; }
+.activity-ranking li { padding: 13px 14px; background: #f8faff; border: 1px solid var(--line); border-radius: 11px; }
+.activity-ranking strong { float: right; color: #647188; font-size: .82rem; }
+.activity-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; }
+.activity-table td:nth-child(4) { min-width: 240px; white-space: normal; }
+
 /* Modal */
 .modal { position: fixed; inset: 0; z-index: 100; padding: 20px; display: grid; place-items: center; }
 .modal[hidden] { display: none; }
@@ -320,12 +348,13 @@ h1, h2, h3 { color: var(--blue-dark); }
 @media (max-width: 1120px) {
     .plan-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .admin-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .crm-summary-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (max-width: 900px) {
     .site-header { position: static; flex-direction: column; gap: 6px; }
     .site-nav { justify-content: center; }
-    .about-grid, .community-layout, .contact-layout, .plan-detail-content, .custom-builder, .admin-layout { grid-template-columns: 1fr; }
+    .about-grid, .community-layout, .contact-layout, .plan-detail-content, .custom-builder, .admin-layout, .dashboard-columns { grid-template-columns: 1fr; }
     .about-grid { max-width: 620px; }
     .custom-summary, .admin-sidebar { position: static; }
     .admin-sidebar { grid-template-columns: repeat(5, minmax(0, 1fr)); }
@@ -336,7 +365,7 @@ h1, h2, h3 { color: var(--blue-dark); }
 @media (max-width: 700px) {
     .section, .catalog-page, .plan-detail, .auth-section, .profile-section { padding-left: 16px; padding-right: 16px; }
     .hero { min-height: 520px; padding: 90px 18px 75px; }
-    .plan-grid, .profile-grid, .module-grid, .admin-summary-grid, .admin-placeholder-grid { grid-template-columns: 1fr; }
+    .plan-grid, .profile-grid, .module-grid, .admin-summary-grid, .crm-summary-grid, .admin-placeholder-grid { grid-template-columns: 1fr; }
     .plan-card { max-width: 520px; margin: 0 auto; }
     .plan-detail-header, .base-plan-heading, .module-group-heading, .profile-heading, .admin-section-heading { flex-direction: column; }
     .admin-section-heading p { text-align: left; }
@@ -347,6 +376,7 @@ h1, h2, h3 { color: var(--blue-dark); }
     .customer-data { grid-template-columns: 1fr; }
     .stage-panel { align-items: stretch; flex-direction: column; }
     .stage-form, .interaction-layout { grid-template-columns: 1fr; }
+    .dashboard-panel-heading, .crm-bar-label { align-items: flex-start; flex-direction: column; }
 }
 
 @media (max-width: 460px) {
@@ -359,6 +389,10 @@ h1, h2, h3 { color: var(--blue-dark); }
     .filter-button { flex: 1 1 44%; }
     .admin-layout, .custom-builder { padding-left: 14px; padding-right: 14px; }
     .admin-sidebar { padding: 14px; }
+    .dashboard-panel { padding: 18px; }
+    .dashboard-list-item { grid-template-columns: 1fr; }
+    .dashboard-list-item > small { grid-column: 1; }
+    .activity-ranking strong { float: none; display: block; margin-top: 4px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

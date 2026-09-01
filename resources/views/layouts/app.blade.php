@@ -23,9 +23,8 @@
                 @auth
                     <a href="{{ route('profile') }}" @if(request()->routeIs('profile')) aria-current="page" @endif>Perfil</a>
                     <a href="{{ route('clientes.index') }}" @if(request()->routeIs('clientes.*')) aria-current="page" @endif>Clientes</a>
-                    @if(auth()->user()->isAdmin())
-                        <a href="{{ route('admin') }}" @if(request()->routeIs('admin')) aria-current="page" @endif>Administración</a>
-                    @endif
+                    <a href="{{ route('admin') }}" @if(request()->routeIs('admin')) aria-current="page" @endif>Dashboard CRM</a>
+                    <a href="{{ route('mi-actividad') }}" @if(request()->routeIs('mi-actividad')) aria-current="page" @endif>Mi actividad</a>
                     <form class="nav-logout-form" method="post" action="{{ route('logout') }}">
                         @csrf
                         <button class="nav-logout-button" type="submit">Cerrar sesión</button>
@@ -47,9 +46,9 @@
             <button class="modal-backdrop" type="button" data-policy-close aria-label="Cerrar políticas"></button>
             <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="policy-title">
                 <button class="modal-close" type="button" data-policy-close aria-label="Cerrar">&times;</button>
-                <span class="section-eyebrow">Etapa 2</span>
+                <span class="section-eyebrow">Etapa 5</span>
                 <h2 id="policy-title">Demostración académica</h2>
-                <p>La autenticación utiliza sesiones Laravel. El proyecto todavía no procesa pagos ni almacena datos de CRM o de operación comercial.</p>
+                <p>La autenticación utiliza sesiones Laravel y el CRM almacena clientes e interacciones para fines académicos. El proyecto todavía no procesa pagos ni operaciones comerciales reales.</p>
                 <button class="button" type="button" data-policy-close>Entendido</button>
             </section>
         </div>

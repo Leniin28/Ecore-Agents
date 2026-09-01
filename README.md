@@ -8,13 +8,17 @@ La Etapa 3 incorpora el primer módulo real del CRM: gestión de clientes con no
 
 La Etapa 4 agrega las etapas CRM `prospecto`, `activo`, `frecuente` e `inactivo`, además del registro de llamadas, correos y reuniones. Cada interacción conserva su fecha, cliente y usuario responsable, y aparece en el historial centralizado del cliente.
 
-Los roles `admin` y `usuario` pueden consultar, crear y editar clientes, cambiar su etapa y registrar interacciones. Solamente `admin` puede eliminar clientes. El CRM todavía no está terminado: las métricas y la pantalla Mi actividad continúan pendientes.
+La Etapa 5 completa el bloque CRM académico con métricas calculadas desde SQLite, dashboard, gráfica de clientes activos e inactivos, clientes en riesgo, conteo de interacciones por cliente y la pantalla Mi actividad. Un cliente activo se considera en riesgo cuando nunca ha tenido una interacción o su última interacción ocurrió hace más de 30 días.
+
+Los roles `admin` y `usuario` pueden consultar el dashboard CRM, gestionar clientes según las reglas existentes, cambiar etapas, registrar interacciones y revisar exclusivamente su propia actividad. Solamente `admin` puede eliminar clientes.
 
 ## API REST del CRM
 
 Los endpoints `GET`, `POST`, `PUT` y `DELETE` bajo `/api/clientes` consultan y persisten clientes mediante Eloquent. La respuesta de cada cliente incluye `etapa_crm` y la etapa puede actualizarse con `PUT /api/clientes/{cliente}/etapa`.
 
 Las interacciones se consultan con `GET /api/clientes/{cliente}/interacciones` y se registran con `POST /api/interacciones`. El usuario responsable se obtiene siempre de la sesión autenticada.
+
+Las métricas CRM se consultan con `GET /api/crm/metricas`. Incluyen total de clientes, activos, inactivos, total de interacciones y clientes sin interacción durante los últimos 30 días.
 
 Los endpoints permanecen dentro de la aplicación monolítica y están protegidos por la sesión Laravel existente; las operaciones que modifican datos también requieren el token CSRF de la sesión web. No se utiliza JWT, Sanctum ni otro paquete de autenticación.
 

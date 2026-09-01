@@ -121,11 +121,14 @@ class AuthenticationTest extends TestCase
         $this->get(route('admin'))->assertRedirect(route('login'));
     }
 
-    public function test_regular_user_cannot_open_admin(): void
+    public function test_regular_user_can_open_crm_dashboard(): void
     {
         $user = User::factory()->create();
 
-        $this->actingAs($user)->get(route('admin'))->assertForbidden();
+        $this->actingAs($user)
+            ->get(route('admin'))
+            ->assertOk()
+            ->assertSee('Dashboard CRM');
     }
 
     public function test_admin_can_open_admin(): void
@@ -135,6 +138,6 @@ class AuthenticationTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin'))
             ->assertOk()
-            ->assertSee('Panel de administrador');
+            ->assertSee('Dashboard CRM');
     }
 }
