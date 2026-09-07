@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Cliente;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -18,13 +19,9 @@ class AuthenticationTest extends TestCase
 
     public function test_a_guest_can_register_as_a_regular_user(): void
     {
-        $response = $this->post(route('register'), [
-            'name' => 'Usuario Nuevo',
-            'email' => 'usuario@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
+        $response = $this->post(route('register'), $this->validData([
             'role' => User::ROLE_ADMIN,
-        ]);
+        ]));
 
         $response->assertRedirect(route('profile'));
         $this->assertAuthenticated();
@@ -39,12 +36,9 @@ class AuthenticationTest extends TestCase
     {
         User::factory()->create(['email' => 'repetido@example.com']);
 
-        $this->post(route('register'), [
-            'name' => 'Otro Usuario',
+        $this->post(route('register'), $this->validData([
             'email' => 'repetido@example.com',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
-        ])->assertSessionHasErrors([
+        ]))->assertSessionHasErrors([
             'email' => 'Ya existe una cuenta con este correo electrónico.',
         ]);
 
@@ -53,16 +47,189 @@ class AuthenticationTest extends TestCase
 
     public function test_registration_password_requires_confirmation(): void
     {
-        $this->post(route('register'), [
-            'name' => 'Usuario Nuevo',
-            'email' => 'usuario@example.com',
-            'password' => 'password123',
+        $this->post(route('register'), $this->validData([
             'password_confirmation' => 'different-password',
-        ])->assertSessionHasErrors([
+        ]))->assertSessionHasErrors([
             'password' => 'La confirmación de contraseña no coincide.',
         ]);
 
         $this->assertGuest();
+    }
+
+    public function test_registration_requires_phone(): void
+    {
+        $this->post(route('register'), $this->validData([
+            'telefono' => '',
+        ]))->assertSessionHasErrors(['telefono']);
+
+        $this->assertGuest();
+    }
+
+    public function test_registration_creates_cliente_record(): void
+    {
+        $this->post(route('register'), $this->validData());
+
+        $this->assertDatabaseHas('clientes', ['correo' => 'usuario@example.com']);
+    }
+
+    public function test_registration_links_cliente_to_user(): void
+    {
+        $this->post(route('register'), $this->validData());
+
+        $user = User::query()->where('email', 'usuario@example.com')->firstOrFail();
+        $cliente = Cliente::query()->where('correo', 'usuario@example.com')->firstOrFail();
+
+        $this->assertSame($user->id, $cliente->user_id);
+        $this->assertTrue($user->cliente->is($cliente));
+        $this->assertTrue($cliente->user->is($user));
+    }
+
+    public function test_registration_copies_name_to_cliente(): void
+    {
+        $this->post(route('register'), $this->validData(['name' => 'Cliente QA Nombre']));
+
+        $this->assertDatabaseHas('clientes', [
+            'correo' => 'usuario@example.com',
+            'nombre' => 'Cliente QA Nombre',
+        ]);
+    }
+
+    public function test_registration_copies_email_to_cliente(): void
+    {
+        $this->post(route('register'), $this->validData());
+
+        $cliente = Cliente::query()->where('correo', 'usuario@example.com')->firstOrFail();
+
+        $this->assertSame('usuario@example.com', $cliente->correo);
+    }
+
+    public function test_registration_saves_phone_on_cliente(): void
+    {
+        $this->post(route('register'), $this->validData(['telefono' => '5599998888']));
+
+        $this->assertDatabaseHas('clientes', [
+            'correo' => 'usuario@example.com',
+            'telefono' => '5599998888',
+        ]);
+    }
+
+    public function test_registration_saves_optional_company(): void
+    {
+        $this->post(route('register'), $this->validData(['empresa' => 'Empresa QA']));
+
+        $this->assertDatabaseHas('clientes', [
+            'correo' => 'usuario@example.com',
+            'empresa' => 'Empresa QA',
+        ]);
+    }
+
+    public function test_registration_without_company_saves_null(): void
+    {
+        $this->post(route('register'), $this->validData(['empresa' => null]));
+
+        $cliente = Cliente::query()->where('correo', 'usuario@example.com')->firstOrFail();
+
+        $this->assertNull($cliente->empresa);
+    }
+
+    public function test_registration_cliente_starts_active(): void
+    {
+        $this->post(route('register'), $this->validData());
+
+        $this->assertDatabaseHas('clientes', [
+            'correo' => 'usuario@example.com',
+            'estado' => Cliente::ESTADO_ACTIVO,
+        ]);
+    }
+
+    public function test_registration_cliente_starts_as_prospecto(): void
+    {
+        $this->post(route('register'), $this->validData());
+
+        $this->assertDatabaseHas('clientes', [
+            'correo' => 'usuario@example.com',
+            'etapa_crm' => Cliente::ETAPA_PROSPECTO,
+        ]);
+    }
+
+    public function test_registration_cliente_appears_in_customer_listing(): void
+    {
+        $this->post(route('register'), $this->validData());
+
+        $cliente = Cliente::query()->where('correo', 'usuario@example.com')->firstOrFail();
+
+        $this->actingAs(User::factory()->create())
+            ->get(route('clientes.index'))
+            ->assertOk()
+            ->assertSee($cliente->nombre);
+    }
+
+    public function test_registration_cliente_affects_dashboard_totals(): void
+    {
+        Cliente::factory()->count(2)->create();
+
+        $this->post(route('register'), $this->validData());
+
+        $this->actingAs(User::factory()->create())
+            ->get(route('admin'))
+            ->assertViewHas('metricas', fn (array $metricas) => $metricas['total_clientes'] === 3);
+    }
+
+    public function test_failed_registration_validation_does_not_leave_orphan_user(): void
+    {
+        $this->post(route('register'), $this->validData([
+            'password_confirmation' => 'different-password',
+        ]));
+
+        $this->assertDatabaseCount('users', 0);
+    }
+
+    public function test_failed_registration_validation_does_not_leave_orphan_cliente(): void
+    {
+        $this->post(route('register'), $this->validData([
+            'password_confirmation' => 'different-password',
+        ]));
+
+        $this->assertDatabaseCount('clientes', 0);
+    }
+
+    public function test_manually_created_cliente_can_have_null_user_id(): void
+    {
+        $cliente = Cliente::factory()->create();
+
+        $this->assertNull($cliente->user_id);
+    }
+
+    public function test_registration_links_existing_manually_created_cliente_by_email(): void
+    {
+        $cliente = Cliente::factory()->create([
+            'correo' => 'usuario@example.com',
+            'estado' => Cliente::ESTADO_INACTIVO,
+        ]);
+
+        $this->post(route('register'), $this->validData());
+
+        $user = User::query()->where('email', 'usuario@example.com')->firstOrFail();
+        $cliente->refresh();
+
+        $this->assertSame($user->id, $cliente->user_id);
+        $this->assertDatabaseCount('clientes', 1);
+    }
+
+    /**
+     * @param  array<string, mixed>  $overrides
+     * @return array<string, mixed>
+     */
+    private function validData(array $overrides = []): array
+    {
+        return array_merge([
+            'name' => 'Usuario Nuevo',
+            'email' => 'usuario@example.com',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'telefono' => '5512345678',
+            'empresa' => 'Empresa QA',
+        ], $overrides);
     }
 
     public function test_user_can_log_in_with_the_correct_password(): void

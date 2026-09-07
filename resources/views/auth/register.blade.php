@@ -21,6 +21,16 @@
                 @error('email')
                     <p class="field-error">{{ $message }}</p>
                 @enderror
+                <label for="register-telefono">Teléfono</label>
+                <input id="register-telefono" name="telefono" type="text" value="{{ old('telefono') }}" autocomplete="tel" required @error('telefono') aria-invalid="true" @enderror>
+                @error('telefono')
+                    <p class="field-error">{{ $message }}</p>
+                @enderror
+                <label for="register-empresa">Empresa (opcional)</label>
+                <input id="register-empresa" name="empresa" type="text" value="{{ old('empresa') }}" autocomplete="organization" @error('empresa') aria-invalid="true" @enderror>
+                @error('empresa')
+                    <p class="field-error">{{ $message }}</p>
+                @enderror
                 <label for="register-password">Contraseña</label>
                 <input id="register-password" name="password" type="password" autocomplete="new-password" required @error('password') aria-invalid="true" @enderror>
                 @error('password')

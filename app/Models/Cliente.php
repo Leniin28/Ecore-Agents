@@ -6,10 +6,11 @@ use Database\Factories\ClienteFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-#[Fillable(['nombre', 'correo', 'telefono', 'empresa', 'fecha_registro', 'estado', 'etapa_crm'])]
+#[Fillable(['user_id', 'nombre', 'correo', 'telefono', 'empresa', 'fecha_registro', 'estado', 'etapa_crm'])]
 class Cliente extends Model
 {
     /** @use HasFactory<ClienteFactory> */
@@ -43,6 +44,11 @@ class Cliente extends Model
     public function etapaCrmLabel(): string
     {
         return self::etapasCrm()[$this->etapa_crm];
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function interacciones(): HasMany
