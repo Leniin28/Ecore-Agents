@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password', 'role', 'permissions'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -21,11 +21,47 @@ class User extends Authenticatable
 
     public const ROLE_ADMIN = 'admin';
 
-    public const ROLE_USER = 'usuario';
+    public const ROLE_EMPLEADO = 'usuario';
+
+    public const ROLE_USER = self::ROLE_EMPLEADO;
+
+    public const ROLE_CLIENTE = 'cliente';
+
+    public const MODULE_CRM = 'crm';
+
+    public const MODULE_SCM = 'scm';
+
+    public const MODULES = [self::MODULE_CRM, self::MODULE_SCM];
 
     public function isAdmin(): bool
     {
         return $this->role === self::ROLE_ADMIN;
+    }
+
+    public function isEmployee(): bool
+    {
+        return $this->role === self::ROLE_EMPLEADO;
+    }
+
+    public function isClient(): bool
+    {
+        return $this->role === self::ROLE_CLIENTE;
+    }
+
+    public function hasModuleAccess(string $module): bool
+    {
+        return $this->isAdmin()
+            || ($this->isEmployee() && in_array($module, $this->permissions ?? [], true));
+    }
+
+    public function roleLabel(): string
+    {
+        return match ($this->role) {
+            self::ROLE_ADMIN => 'Administrador',
+            self::ROLE_EMPLEADO => 'Empleado',
+            self::ROLE_CLIENTE => 'Cliente',
+            default => 'Sin tipo',
+        };
     }
 
     public function interacciones(): HasMany
@@ -48,6 +84,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'permissions' => 'array',
         ];
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Cliente;
+use App\Models\Auditoria;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -34,6 +35,7 @@ class ClienteController extends Controller
             ...$this->validateCliente($request),
             'fecha_registro' => now()->toDateString(),
         ]);
+        Auditoria::registrar($request->user(), 'crear', 'cliente', $cliente->id, "Creó al cliente {$cliente->nombre}.");
 
         return redirect()->route('clientes.show', $cliente)
             ->with('success', 'Cliente creado correctamente.');
@@ -59,6 +61,7 @@ class ClienteController extends Controller
     public function update(Request $request, Cliente $cliente): RedirectResponse
     {
         $cliente->update($this->validateCliente($request, $cliente));
+        Auditoria::registrar($request->user(), 'editar', 'cliente', $cliente->id, "Editó al cliente {$cliente->nombre}.");
 
         return redirect()->route('clientes.show', $cliente)
             ->with('success', 'Cliente actualizado correctamente.');
@@ -67,6 +70,7 @@ class ClienteController extends Controller
     public function destroy(Request $request, Cliente $cliente): RedirectResponse
     {
         $this->authorizeDeletion($request);
+        Auditoria::registrar($request->user(), 'eliminar', 'cliente', $cliente->id, "Eliminó al cliente {$cliente->nombre}.");
         $cliente->delete();
 
         return redirect()->route('clientes.index')
@@ -76,6 +80,7 @@ class ClienteController extends Controller
     public function updateEtapa(Request $request, Cliente $cliente): RedirectResponse
     {
         $cliente->update($this->validateEtapa($request));
+        Auditoria::registrar($request->user(), 'cambiar_etapa', 'cliente', $cliente->id, "Cambió la etapa CRM de {$cliente->nombre} a {$cliente->etapa_crm}.");
 
         return redirect()->route('clientes.show', $cliente)
             ->with('success', 'Etapa CRM actualizada correctamente.');
@@ -94,6 +99,7 @@ class ClienteController extends Controller
             ...$this->validateCliente($request),
             'fecha_registro' => now()->toDateString(),
         ]);
+        Auditoria::registrar($request->user(), 'crear', 'cliente', $cliente->id, "Creó al cliente {$cliente->nombre} mediante API.");
 
         return response()->json(['data' => $this->serializeCliente($cliente->fresh())], 201);
     }
@@ -106,6 +112,7 @@ class ClienteController extends Controller
     public function apiUpdate(Request $request, Cliente $cliente): JsonResponse
     {
         $cliente->update($this->validateCliente($request, $cliente));
+        Auditoria::registrar($request->user(), 'editar', 'cliente', $cliente->id, "Editó al cliente {$cliente->nombre} mediante API.");
 
         return response()->json(['data' => $this->serializeCliente($cliente->fresh())]);
     }
@@ -113,6 +120,7 @@ class ClienteController extends Controller
     public function apiDestroy(Request $request, Cliente $cliente): Response
     {
         $this->authorizeDeletion($request);
+        Auditoria::registrar($request->user(), 'eliminar', 'cliente', $cliente->id, "Eliminó al cliente {$cliente->nombre} mediante API.");
         $cliente->delete();
 
         return response()->noContent();
@@ -121,6 +129,7 @@ class ClienteController extends Controller
     public function apiUpdateEtapa(Request $request, Cliente $cliente): JsonResponse
     {
         $cliente->update($this->validateEtapa($request));
+        Auditoria::registrar($request->user(), 'cambiar_etapa', 'cliente', $cliente->id, "Cambió la etapa CRM de {$cliente->nombre} a {$cliente->etapa_crm} mediante API.");
 
         return response()->json(['data' => $this->serializeCliente($cliente->fresh())]);
     }

@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Admin\AuditoriaController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\CrmDashboardController;
 use App\Http\Controllers\InteraccionController;
@@ -40,23 +42,32 @@ Route::middleware('auth')->group(function () {
     Route::get('/perfil', [ProfileController::class, 'show'])->name('profile');
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-    Route::get('/admin', [CrmDashboardController::class, 'index'])->name('admin');
-    Route::get('/mi-actividad', [CrmDashboardController::class, 'miActividad'])->name('mi-actividad');
+    Route::middleware('module:crm')->group(function () {
+        Route::get('/admin', [CrmDashboardController::class, 'index'])->name('admin');
+        Route::get('/mi-actividad', [CrmDashboardController::class, 'miActividad'])->name('mi-actividad');
 
-    Route::resource('clientes', ClienteController::class);
-    Route::put('/clientes/{cliente}/etapa', [ClienteController::class, 'updateEtapa'])->name('clientes.etapa.update');
-    Route::get('/clientes/{cliente}/interacciones', [InteraccionController::class, 'index'])->name('clientes.interacciones.index');
-    Route::post('/interacciones', [InteraccionController::class, 'store'])->name('interacciones.store');
+        Route::resource('clientes', ClienteController::class);
+        Route::put('/clientes/{cliente}/etapa', [ClienteController::class, 'updateEtapa'])->name('clientes.etapa.update');
+        Route::get('/clientes/{cliente}/interacciones', [InteraccionController::class, 'index'])->name('clientes.interacciones.index');
+        Route::post('/interacciones', [InteraccionController::class, 'store'])->name('interacciones.store');
 
-    Route::prefix('api')->name('api.')->group(function () {
-        Route::get('/crm/metricas', [CrmDashboardController::class, 'apiMetricas'])->name('crm.metricas');
-        Route::get('/clientes', [ClienteController::class, 'apiIndex'])->name('clientes.index');
-        Route::post('/clientes', [ClienteController::class, 'apiStore'])->name('clientes.store');
-        Route::get('/clientes/{cliente}', [ClienteController::class, 'apiShow'])->name('clientes.show');
-        Route::put('/clientes/{cliente}', [ClienteController::class, 'apiUpdate'])->name('clientes.update');
-        Route::delete('/clientes/{cliente}', [ClienteController::class, 'apiDestroy'])->name('clientes.destroy');
-        Route::put('/clientes/{cliente}/etapa', [ClienteController::class, 'apiUpdateEtapa'])->name('clientes.etapa.update');
-        Route::get('/clientes/{cliente}/interacciones', [InteraccionController::class, 'apiIndex'])->name('clientes.interacciones.index');
-        Route::post('/interacciones', [InteraccionController::class, 'apiStore'])->name('interacciones.store');
+        Route::prefix('api')->name('api.')->group(function () {
+            Route::get('/crm/metricas', [CrmDashboardController::class, 'apiMetricas'])->name('crm.metricas');
+            Route::get('/clientes', [ClienteController::class, 'apiIndex'])->name('clientes.index');
+            Route::post('/clientes', [ClienteController::class, 'apiStore'])->name('clientes.store');
+            Route::get('/clientes/{cliente}', [ClienteController::class, 'apiShow'])->name('clientes.show');
+            Route::put('/clientes/{cliente}', [ClienteController::class, 'apiUpdate'])->name('clientes.update');
+            Route::delete('/clientes/{cliente}', [ClienteController::class, 'apiDestroy'])->name('clientes.destroy');
+            Route::put('/clientes/{cliente}/etapa', [ClienteController::class, 'apiUpdateEtapa'])->name('clientes.etapa.update');
+            Route::get('/clientes/{cliente}/interacciones', [InteraccionController::class, 'apiIndex'])->name('clientes.interacciones.index');
+            Route::post('/interacciones', [InteraccionController::class, 'apiStore'])->name('interacciones.store');
+        });
+    });
+
+    Route::prefix('admin')->name('admin.')->middleware('admin')->group(function () {
+        Route::resource('usuarios', AdminUserController::class)->except(['show', 'destroy']);
+        Route::get('/usuarios/{usuario}/password', [AdminUserController::class, 'editPassword'])->name('usuarios.password.edit');
+        Route::put('/usuarios/{usuario}/password', [AdminUserController::class, 'updatePassword'])->name('usuarios.password.update');
+        Route::get('/auditoria', [AuditoriaController::class, 'index'])->name('auditoria.index');
     });
 });

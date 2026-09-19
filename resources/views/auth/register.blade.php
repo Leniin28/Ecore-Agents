@@ -8,7 +8,7 @@
         <article class="auth-card">
             <span class="section-eyebrow">Cuenta personal</span>
             <h1>Crear cuenta</h1>
-            <p class="demo-notice">Regístrate para acceder a tu perfil. Todas las cuentas públicas se crean con el rol usuario.</p>
+            <p class="demo-notice">Regístrate para acceder a tu perfil. Las cuentas públicas son cuentas de cliente y no acceden a módulos internos.</p>
             <form class="auth-form" method="post" action="{{ route('register') }}">
                 @csrf
                 <label for="register-name">Nombre</label>

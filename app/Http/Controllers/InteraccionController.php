@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Cliente;
 use App\Models\Interaccion;
+use App\Models\Auditoria;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,12 +25,13 @@ class InteraccionController extends Controller
         $validated = $this->validateInteraccion($request);
         $cliente = Cliente::findOrFail($validated['cliente_id']);
 
-        $cliente->interacciones()->create([
+        $interaccion = $cliente->interacciones()->create([
             'usuario_id' => $request->user()->id,
             'tipo' => $validated['tipo'],
             'descripcion' => $validated['descripcion'],
             'fecha' => $validated['fecha'],
         ]);
+        Auditoria::registrar($request->user(), 'crear', 'interaccion', $interaccion->id, "Registró una interacción {$interaccion->tipo} con {$cliente->nombre}.");
 
         return redirect()->route('clientes.show', $cliente)
             ->with('success', 'Interacción registrada correctamente.');
@@ -59,6 +61,7 @@ class InteraccionController extends Controller
             'descripcion' => $validated['descripcion'],
             'fecha' => $validated['fecha'],
         ]);
+        Auditoria::registrar($request->user(), 'crear', 'interaccion', $interaccion->id, "Registró una interacción {$interaccion->tipo} con {$cliente->nombre} mediante API.");
 
         return response()->json([
             'data' => $this->serializeInteraccion($interaccion->load('usuario')),

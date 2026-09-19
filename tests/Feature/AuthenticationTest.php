@@ -28,7 +28,7 @@ class AuthenticationTest extends TestCase
 
         $user = User::query()->where('email', 'usuario@example.com')->firstOrFail();
 
-        $this->assertSame(User::ROLE_USER, $user->role);
+        $this->assertSame(User::ROLE_CLIENTE, $user->role);
         $this->assertTrue(Hash::check('password123', $user->password));
     }
 

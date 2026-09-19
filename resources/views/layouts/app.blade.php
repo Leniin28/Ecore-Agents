@@ -22,9 +22,16 @@
                 @endguest
                 @auth
                     <a href="{{ route('profile') }}" @if(request()->routeIs('profile')) aria-current="page" @endif>Perfil</a>
-                    <a href="{{ route('clientes.index') }}" @if(request()->routeIs('clientes.*')) aria-current="page" @endif>Clientes</a>
-                    <a href="{{ route('admin') }}" @if(request()->routeIs('admin')) aria-current="page" @endif>Dashboard CRM</a>
-                    <a href="{{ route('mi-actividad') }}" @if(request()->routeIs('mi-actividad')) aria-current="page" @endif>Mi actividad</a>
+                    @if(auth()->user()->hasModuleAccess('crm'))
+                        <a href="{{ route('admin') }}" @if(request()->routeIs('admin', 'clientes.*', 'mi-actividad')) aria-current="page" @endif>CRM</a>
+                    @endif
+                    @if(auth()->user()->hasModuleAccess('scm'))
+                        <a href="#" aria-disabled="true">SCM</a>
+                    @endif
+                    @if(auth()->user()->isAdmin())
+                        <a href="{{ route('admin.usuarios.index') }}" @if(request()->routeIs('admin.usuarios.*')) aria-current="page" @endif>Usuarios</a>
+                        <a href="{{ route('admin.auditoria.index') }}" @if(request()->routeIs('admin.auditoria.*')) aria-current="page" @endif>Auditoría</a>
+                    @endif
                     <form class="nav-logout-form" method="post" action="{{ route('logout') }}">
                         @csrf
                         <button class="nav-logout-button" type="submit">Cerrar sesión</button>
