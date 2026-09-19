@@ -7,5 +7,6 @@
     <a class="admin-menu-button {{ request()->routeIs('scm.movimientos.*') ? 'is-active' : '' }}" href="{{ route('scm.movimientos.index') }}">Movimientos</a>
     <a class="admin-menu-button {{ request()->routeIs('scm.pedidos.*') ? 'is-active' : '' }}" href="{{ route('scm.pedidos.index') }}">Pedidos</a>
     <a class="admin-menu-button {{ request()->routeIs('scm.logistica.*') ? 'is-active' : '' }}" href="{{ route('scm.logistica.index') }}">Logística PUSH / PULL</a>
-    <a class="admin-menu-button {{ request()->routeIs('scm.madurez.*') ? 'is-active' : '' }}" href="{{ route('scm.madurez.index') }}">Madurez / Reportes</a>
+    <a class="admin-menu-button {{ request()->routeIs('scm.madurez.*') ? 'is-active' : '' }}" href="{{ route('scm.madurez.index') }}">Madurez</a>
+    <a class="admin-menu-button {{ request()->routeIs('scm.reportes') ? 'is-active' : '' }}" href="{{ route('scm.reportes') }}">Reportes</a>
 </aside>

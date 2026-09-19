@@ -18,7 +18,8 @@ class ScmDashboardTest extends TestCase
     public function test_empty_dashboard_and_metrics_are_safe(): void
     {
         $user = $this->scmUser();
-        $this->actingAs($user)->get(route('scm.dashboard'))->assertOk()->assertSee('Dashboard SCM')->assertSee('Sin recursos registrados.');
+        $this->actingAs($user)->get(route('scm.dashboard'))->assertOk()->assertSee('Dashboard SCM')->assertSee('Sin pedidos.');
+        $this->actingAs($user)->get(route('scm.reportes'))->assertOk()->assertSee('Sin recursos registrados.');
         $this->actingAs($user)->getJson(route('api.scm.metricas'))->assertOk()
             ->assertJsonPath('data.totales.productos', 0)->assertJsonPath('data.estrategias.porcentaje_push', 0)
             ->assertJsonPath('data.estrategias.porcentaje_pull', 0);
@@ -36,7 +37,7 @@ class ScmDashboardTest extends TestCase
         Pedido::create(['producto_id' => $critical->id, 'usuario_id' => null, 'cantidad' => 5,
             'tipo' => 'reposicion', 'estado' => 'pendiente', 'origen' => 'automatico_push']);
 
-        $this->actingAs($user)->get(route('scm.dashboard'))->assertOk()->assertSee('Crítico')->assertSee('Normal')->assertSee('Últimos 30 días');
+        $this->actingAs($user)->get(route('scm.reportes'))->assertOk()->assertSee('Crítico')->assertSee('Normal')->assertSee('Últimos 30 días');
         $this->actingAs($user)->getJson(route('api.scm.metricas'))->assertOk()
             ->assertJsonPath('data.totales.productos', 2)->assertJsonPath('data.totales.proveedores', 1)
             ->assertJsonPath('data.totales.pedidos_pendientes', 1)->assertJsonPath('data.totales.inventario_critico', 1)
@@ -69,6 +70,7 @@ class ScmDashboardTest extends TestCase
     {
         $crmOnly = User::factory()->create(['permissions' => ['crm']]);
         $this->actingAs($crmOnly)->get(route('scm.dashboard'))->assertForbidden();
+        $this->actingAs($crmOnly)->get(route('scm.reportes'))->assertForbidden();
         $this->actingAs($crmOnly)->get(route('scm.madurez.index'))->assertForbidden();
         $this->actingAs($crmOnly)->getJson(route('api.scm.metricas'))->assertForbidden();
     }

@@ -81,6 +81,7 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('scm')->name('scm.')->middleware('module:scm')->group(function () {
         Route::get('/', [ScmDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/reportes', [ScmDashboardController::class, 'reportes'])->name('reportes');
         Route::resource('proveedores', ProveedorController::class)->except('show')->parameters(['proveedores' => 'proveedor']);
         Route::resource('productos', ProductoController::class)->except('show');
         Route::get('/inventario', [InventarioController::class, 'index'])->name('inventario.index');
