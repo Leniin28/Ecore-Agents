@@ -39,7 +39,7 @@ class ScmReportsTest extends TestCase
         Pedido::create(['producto_id' => $normal->id, 'usuario_id' => $user->id, 'cantidad' => 4, 'tipo' => 'venta', 'estado' => 'pendiente', 'origen' => 'manual']);
 
         $this->actingAs($user)->get(route('scm.reportes'))->assertOk()
-            ->assertSeeInOrder(['Productos', '>2<', 'Proveedores', '>1<', 'Pedidos pendientes', 'Stock bajo']);
+            ->assertSeeInOrder(['Recursos IA', '>2<', 'Proveedores', '>1<', 'Pedidos pendientes', 'Stock bajo']);
         $this->actingAs($user)->getJson(route('api.scm.metricas'))->assertOk()
             ->assertJsonPath('data.totales.productos', 2)
             ->assertJsonPath('data.totales.proveedores', 1)
@@ -86,7 +86,7 @@ class ScmReportsTest extends TestCase
         $user = $this->scmUser();
         $this->actingAs($user)->get(route('scm.reportes'))->assertOk()
             ->assertSee('Sin recursos registrados.')
-            ->assertSee('No hay productos con stock crítico.')
+            ->assertSee('No hay recursos en nivel crítico.')
             ->assertSee('0%');
         $this->actingAs($user)->getJson(route('api.scm.metricas'))->assertOk()
             ->assertJsonPath('data.rotacion.total', 0)
@@ -103,6 +103,7 @@ class ScmReportsTest extends TestCase
         $this->product($supplier, 'Normal', 11, 10, 'PULL');
 
         $this->actingAs($user)->get(route('scm.reportes'))->assertOk()
+            ->assertSee('Inventario crítico')
             ->assertSeeInOrder(['Déficit mayor', 'Déficit menor'])
             ->assertDontSee('Normal</td>', false);
     }

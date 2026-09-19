@@ -30,7 +30,7 @@ class DemoDataSeeder extends Seeder
         );
 
         $proveedor = Proveedor::query()->updateOrCreate(
-            ['nombre' => 'OpenRouter Demo'],
+            ['nombre' => 'OpenRouter'],
             [
                 'contacto' => 'Equipo académico ECore',
                 'correo' => 'proveedor.demo@ecore.local',

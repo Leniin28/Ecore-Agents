@@ -84,7 +84,11 @@ Estas credenciales son exclusivamente académicas y locales. Deben eliminarse o 
 En entorno local, el seeder general también crea cinco recursos ficticios, movimientos distribuidos en seis meses y pedidos con estados y orígenes distintos. Es idempotente: puede ejecutarse más de una vez sin duplicar esos registros.
 
 ```bash
-git pull
+git pull origin main
+composer install
+npm install
+copy .env.example .env
+php artisan key:generate
 php artisan migrate
 php artisan db:seed --class=DemoDataSeeder
 ```
