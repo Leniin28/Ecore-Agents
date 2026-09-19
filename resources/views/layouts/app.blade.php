@@ -26,7 +26,7 @@
                         <a href="{{ route('admin') }}" @if(request()->routeIs('admin', 'clientes.*', 'mi-actividad')) aria-current="page" @endif>CRM</a>
                     @endif
                     @if(auth()->user()->hasModuleAccess('scm'))
-                        <a href="#" aria-disabled="true">SCM</a>
+                        <a href="{{ route('scm.dashboard') }}" @if(request()->routeIs('scm.*')) aria-current="page" @endif>SCM</a>
                     @endif
                     @if(auth()->user()->isAdmin())
                         <a href="{{ route('admin.usuarios.index') }}" @if(request()->routeIs('admin.usuarios.*')) aria-current="page" @endif>Usuarios</a>

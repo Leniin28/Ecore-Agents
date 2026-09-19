@@ -8,6 +8,8 @@ use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\CrmDashboardController;
 use App\Http\Controllers\InteraccionController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Scm\ProductoController;
+use App\Http\Controllers\Scm\ProveedorController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -69,5 +71,22 @@ Route::middleware('auth')->group(function () {
         Route::get('/usuarios/{usuario}/password', [AdminUserController::class, 'editPassword'])->name('usuarios.password.edit');
         Route::put('/usuarios/{usuario}/password', [AdminUserController::class, 'updatePassword'])->name('usuarios.password.update');
         Route::get('/auditoria', [AuditoriaController::class, 'index'])->name('auditoria.index');
+    });
+
+    Route::prefix('scm')->name('scm.')->middleware('module:scm')->group(function () {
+        Route::get('/', fn () => redirect()->route('scm.productos.index'))->name('dashboard');
+        Route::resource('proveedores', ProveedorController::class)->except('show')->parameters(['proveedores' => 'proveedor']);
+        Route::resource('productos', ProductoController::class)->except('show');
+    });
+
+    Route::prefix('api/scm')->name('api.scm.')->middleware('module:scm')->group(function () {
+        Route::get('/proveedores', [ProveedorController::class, 'apiIndex'])->name('proveedores.index');
+        Route::post('/proveedores', [ProveedorController::class, 'apiStore'])->name('proveedores.store');
+        Route::put('/proveedores/{proveedor}', [ProveedorController::class, 'apiUpdate'])->name('proveedores.update');
+        Route::delete('/proveedores/{proveedor}', [ProveedorController::class, 'apiDestroy'])->name('proveedores.destroy');
+        Route::get('/productos', [ProductoController::class, 'apiIndex'])->name('productos.index');
+        Route::post('/productos', [ProductoController::class, 'apiStore'])->name('productos.store');
+        Route::put('/productos/{producto}', [ProductoController::class, 'apiUpdate'])->name('productos.update');
+        Route::delete('/productos/{producto}', [ProductoController::class, 'apiDestroy'])->name('productos.destroy');
     });
 });

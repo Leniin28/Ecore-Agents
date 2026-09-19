@@ -17,7 +17,7 @@ class UserAdministrationTest extends TestCase
         $client = User::factory()->create(['role' => User::ROLE_CLIENTE, 'permissions' => null]);
 
         $this->actingAs($client)->get(route('admin'))->assertForbidden();
-        $this->actingAs($client)->get('/scm')->assertNotFound();
+        $this->actingAs($client)->get('/scm')->assertForbidden();
     }
 
     public function test_admin_can_create_employee_with_module_permissions(): void
@@ -57,8 +57,9 @@ class UserAdministrationTest extends TestCase
         $scm = User::factory()->create(['permissions' => ['scm']]);
 
         $this->actingAs($crm)->get(route('admin'))->assertOk();
-        $this->actingAs($crm)->get('/scm')->assertNotFound();
+        $this->actingAs($crm)->get('/scm')->assertForbidden();
         $this->actingAs($scm)->get(route('admin'))->assertForbidden();
+        $this->actingAs($scm)->get('/scm')->assertRedirect(route('scm.productos.index'));
     }
 
     public function test_last_admin_cannot_be_demoted(): void
