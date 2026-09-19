@@ -12,6 +12,8 @@ use App\Http\Controllers\Scm\ProductoController;
 use App\Http\Controllers\Scm\ProveedorController;
 use App\Http\Controllers\Scm\InventarioController;
 use App\Http\Controllers\Scm\MovimientoInventarioController;
+use App\Http\Controllers\Scm\LogisticaController;
+use App\Http\Controllers\Scm\PedidoController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -84,6 +86,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/movimientos/create', [MovimientoInventarioController::class, 'create'])->name('movimientos.create');
         Route::post('/movimientos', [MovimientoInventarioController::class, 'store'])->name('movimientos.store');
         Route::get('/productos/{producto}/movimientos', [MovimientoInventarioController::class, 'porProducto'])->name('productos.movimientos');
+        Route::get('/logistica', [LogisticaController::class, 'index'])->name('logistica.index');
+        Route::get('/logistica/comparativa', [LogisticaController::class, 'comparativa'])->name('logistica.comparativa');
+        Route::put('/productos/{producto}/estrategia', [LogisticaController::class, 'update'])->name('productos.estrategia.update');
+        Route::get('/pedidos', [PedidoController::class, 'index'])->name('pedidos.index');
+        Route::get('/pedidos/create', [PedidoController::class, 'create'])->name('pedidos.create');
+        Route::post('/pedidos', [PedidoController::class, 'store'])->name('pedidos.store');
+        Route::put('/pedidos/{pedido}/estado', [PedidoController::class, 'surtir'])->name('pedidos.estado.update');
     });
 
     Route::prefix('api/scm')->name('api.scm.')->middleware('module:scm')->group(function () {
@@ -98,5 +107,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/movimientos', [MovimientoInventarioController::class, 'apiIndex'])->name('movimientos.index');
         Route::post('/inventario/movimiento', [MovimientoInventarioController::class, 'apiStore'])->name('movimientos.store');
         Route::get('/productos/{producto}/movimientos', [MovimientoInventarioController::class, 'apiPorProducto'])->name('productos.movimientos');
+        Route::put('/productos/{producto}/estrategia', [LogisticaController::class, 'apiUpdate'])->name('productos.estrategia.update');
+        Route::get('/pedidos', [PedidoController::class, 'apiIndex'])->name('pedidos.index');
+        Route::post('/pedidos', [PedidoController::class, 'apiStore'])->name('pedidos.store');
+        Route::put('/pedidos/{pedido}/estado', [PedidoController::class, 'apiUpdateEstado'])->name('pedidos.estado.update');
     });
 });

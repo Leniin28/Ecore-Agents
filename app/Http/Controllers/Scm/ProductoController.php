@@ -140,8 +140,8 @@ class ProductoController extends Controller
 
     private function ensureWithoutMovements(Producto $producto): void
     {
-        if ($producto->movimientos()->exists()) {
-            throw ValidationException::withMessages(['producto' => 'No se puede eliminar un producto con movimientos de inventario.']);
+        if ($producto->movimientos()->exists() || $producto->pedidos()->exists()) {
+            throw ValidationException::withMessages(['producto' => 'No se puede eliminar un producto con movimientos o pedidos.']);
         }
     }
 }

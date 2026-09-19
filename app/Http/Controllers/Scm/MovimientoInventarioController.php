@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use App\Services\ScmReposicionService;
 
 class MovimientoInventarioController extends Controller
 {
@@ -85,6 +86,9 @@ class MovimientoInventarioController extends Controller
                 'fecha' => $data['fecha'],
             ]);
             $producto->update(['stock_actual' => $nuevoStock]);
+            if ($movimiento->tipo === MovimientoInventario::TIPO_SALIDA) {
+                app(ScmReposicionService::class)->generarPushSiCorresponde($producto->fresh());
+            }
             Auditoria::registrar($request->user(), 'registrar_movimiento', 'movimiento_inventario', $movimiento->id,
                 "Registró {$movimiento->tipo} de {$movimiento->cantidad} unidades para {$producto->nombre}.");
 
