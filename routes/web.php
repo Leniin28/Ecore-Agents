@@ -10,6 +10,8 @@ use App\Http\Controllers\InteraccionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Scm\ProductoController;
 use App\Http\Controllers\Scm\ProveedorController;
+use App\Http\Controllers\Scm\InventarioController;
+use App\Http\Controllers\Scm\MovimientoInventarioController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -77,6 +79,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/', fn () => redirect()->route('scm.productos.index'))->name('dashboard');
         Route::resource('proveedores', ProveedorController::class)->except('show')->parameters(['proveedores' => 'proveedor']);
         Route::resource('productos', ProductoController::class)->except('show');
+        Route::get('/inventario', [InventarioController::class, 'index'])->name('inventario.index');
+        Route::get('/movimientos', [MovimientoInventarioController::class, 'index'])->name('movimientos.index');
+        Route::get('/movimientos/create', [MovimientoInventarioController::class, 'create'])->name('movimientos.create');
+        Route::post('/movimientos', [MovimientoInventarioController::class, 'store'])->name('movimientos.store');
+        Route::get('/productos/{producto}/movimientos', [MovimientoInventarioController::class, 'porProducto'])->name('productos.movimientos');
     });
 
     Route::prefix('api/scm')->name('api.scm.')->middleware('module:scm')->group(function () {
@@ -88,5 +95,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/productos', [ProductoController::class, 'apiStore'])->name('productos.store');
         Route::put('/productos/{producto}', [ProductoController::class, 'apiUpdate'])->name('productos.update');
         Route::delete('/productos/{producto}', [ProductoController::class, 'apiDestroy'])->name('productos.destroy');
+        Route::get('/movimientos', [MovimientoInventarioController::class, 'apiIndex'])->name('movimientos.index');
+        Route::post('/inventario/movimiento', [MovimientoInventarioController::class, 'apiStore'])->name('movimientos.store');
+        Route::get('/productos/{producto}/movimientos', [MovimientoInventarioController::class, 'apiPorProducto'])->name('productos.movimientos');
     });
 });

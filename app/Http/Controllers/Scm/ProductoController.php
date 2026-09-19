@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -55,6 +56,7 @@ class ProductoController extends Controller
 
     public function destroy(Request $request, Producto $producto): RedirectResponse
     {
+        $this->ensureWithoutMovements($producto);
         Auditoria::registrar($request->user(), 'eliminar', 'producto', $producto->id, "Eliminó el recurso IA {$producto->nombre}.");
         $producto->delete();
 
@@ -84,6 +86,7 @@ class ProductoController extends Controller
 
     public function apiDestroy(Request $request, Producto $producto): Response
     {
+        $this->ensureWithoutMovements($producto);
         Auditoria::registrar($request->user(), 'eliminar', 'producto', $producto->id, "Eliminó el recurso IA {$producto->nombre} mediante API.");
         $producto->delete();
 
@@ -133,5 +136,12 @@ class ProductoController extends Controller
             ...$producto->only(['id', 'nombre', 'descripcion', 'categoria', 'stock_actual', 'stock_minimo', 'proveedor_id', 'costo_unitario', 'estrategia_logistica', 'created_at', 'updated_at']),
             'proveedor' => $producto->proveedor?->only(['id', 'nombre']),
         ];
+    }
+
+    private function ensureWithoutMovements(Producto $producto): void
+    {
+        if ($producto->movimientos()->exists()) {
+            throw ValidationException::withMessages(['producto' => 'No se puede eliminar un producto con movimientos de inventario.']);
+        }
     }
 }
