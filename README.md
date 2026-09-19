@@ -79,6 +79,18 @@ El seeder crea un administrador únicamente cuando `APP_ENV=local`:
 
 Estas credenciales son exclusivamente académicas y locales. Deben eliminarse o sustituirse antes de cualquier despliegue real; el seeder se omite automáticamente fuera del entorno local.
 
+## Datos demo compartidos
+
+En entorno local, el seeder general también crea cinco recursos ficticios, movimientos distribuidos en seis meses y pedidos con estados y orígenes distintos. Es idempotente: puede ejecutarse más de una vez sin duplicar esos registros.
+
+```bash
+git pull
+php artisan migrate
+php artisan db:seed --class=DemoDataSeeder
+```
+
+Empleado SCM demo: `empleado.scm@ecore.local` / `ECoreDemo2026!`. Los datos no llaman servicios externos ni usan claves reales. El archivo `database/database.sqlite` permanece local e ignorado por Git.
+
 ## Ejecución local
 
 Para iniciar el servidor, el worker de colas y Vite mediante el comando convencional del proyecto:
