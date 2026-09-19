@@ -14,6 +14,8 @@ use App\Http\Controllers\Scm\InventarioController;
 use App\Http\Controllers\Scm\MovimientoInventarioController;
 use App\Http\Controllers\Scm\LogisticaController;
 use App\Http\Controllers\Scm\PedidoController;
+use App\Http\Controllers\Scm\DashboardController as ScmDashboardController;
+use App\Http\Controllers\Scm\MadurezController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -78,7 +80,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('scm')->name('scm.')->middleware('module:scm')->group(function () {
-        Route::get('/', fn () => redirect()->route('scm.productos.index'))->name('dashboard');
+        Route::get('/', [ScmDashboardController::class, 'index'])->name('dashboard');
         Route::resource('proveedores', ProveedorController::class)->except('show')->parameters(['proveedores' => 'proveedor']);
         Route::resource('productos', ProductoController::class)->except('show');
         Route::get('/inventario', [InventarioController::class, 'index'])->name('inventario.index');
@@ -93,6 +95,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/pedidos/create', [PedidoController::class, 'create'])->name('pedidos.create');
         Route::post('/pedidos', [PedidoController::class, 'store'])->name('pedidos.store');
         Route::put('/pedidos/{pedido}/estado', [PedidoController::class, 'surtir'])->name('pedidos.estado.update');
+        Route::get('/madurez', [MadurezController::class, 'index'])->name('madurez.index');
+        Route::put('/nivel', [MadurezController::class, 'update'])->name('nivel.update');
+        Route::get('/estado', [MadurezController::class, 'estado'])->name('estado');
     });
 
     Route::prefix('api/scm')->name('api.scm.')->middleware('module:scm')->group(function () {
@@ -111,5 +116,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/pedidos', [PedidoController::class, 'apiIndex'])->name('pedidos.index');
         Route::post('/pedidos', [PedidoController::class, 'apiStore'])->name('pedidos.store');
         Route::put('/pedidos/{pedido}/estado', [PedidoController::class, 'apiUpdateEstado'])->name('pedidos.estado.update');
+        Route::get('/metricas', [ScmDashboardController::class, 'apiMetricas'])->name('metricas');
+        Route::get('/estado', [MadurezController::class, 'estado'])->name('estado');
+        Route::put('/nivel', [MadurezController::class, 'apiUpdate'])->name('nivel.update');
     });
 });

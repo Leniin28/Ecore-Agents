@@ -59,7 +59,7 @@ class UserAdministrationTest extends TestCase
         $this->actingAs($crm)->get(route('admin'))->assertOk();
         $this->actingAs($crm)->get('/scm')->assertForbidden();
         $this->actingAs($scm)->get(route('admin'))->assertForbidden();
-        $this->actingAs($scm)->get('/scm')->assertRedirect(route('scm.productos.index'));
+        $this->actingAs($scm)->get('/scm')->assertOk();
     }
 
     public function test_last_admin_cannot_be_demoted(): void

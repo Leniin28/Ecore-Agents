@@ -230,7 +230,11 @@ h1, h2, h3 { color: var(--blue-dark); }
 .admin-menu-button.is-active { color: #fff; background: var(--blue); border-color: var(--blue); }
 .admin-menu-placeholder { padding: 11px 13px; display: grid; gap: 2px; color: #7d8799; font-weight: 800; }
 .admin-menu-placeholder small { font-size: .7rem; font-weight: 600; }
-.admin-content { min-height: 570px; padding: clamp(24px, 4vw, 38px); }
+.admin-content { min-width: 0; min-height: 570px; padding: clamp(24px, 4vw, 38px); }
+.table-wrap { width: 100%; min-width: 0; overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; }
+.table-wrap table { width: 100%; border-collapse: collapse; background: #fff; font-size: .9rem; }
+.table-wrap th, .table-wrap td { padding: 13px 14px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.table-wrap th { color: #34405a; background: #f3f6fb; font-size: .76rem; letter-spacing: .04em; text-transform: uppercase; }
 .admin-section[hidden] { display: none; }
 .admin-section-heading { margin-bottom: 26px; }
 .admin-section-heading h2 { margin: 0; font-size: 2rem; }
@@ -309,7 +313,8 @@ h1, h2, h3 { color: var(--blue-dark); }
 .type-reunion { color: #9a3412; background: #ffeadb; }
 
 /* CRM dashboard and personal activity */
-.dashboard-content, .activity-content { display: grid; align-content: start; gap: 24px; }
+.dashboard-content, .activity-content { display: grid; grid-template-columns: minmax(0, 1fr); align-content: start; gap: 24px; }
+.dashboard-panel { min-width: 0; }
 .crm-summary-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .dashboard-panel { padding: 24px; background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 8px 24px rgba(32,50,82,.05); }
 .dashboard-panel-heading { margin-bottom: 20px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
