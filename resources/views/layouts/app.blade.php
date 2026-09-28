@@ -27,6 +27,9 @@
                     @endif
                     @if(auth()->user()->hasModuleAccess('scm'))
                         <a href="{{ route('scm.dashboard') }}" @if(request()->routeIs('scm.*')) aria-current="page" @endif>SCM</a>
+                        @if(($cantidadStockBajo ?? 0) > 0)
+                            <a class="nav-stock-alert" href="{{ route('scm.inventario.index') }}">⚠ Stock bajo: {{ $cantidadStockBajo }}</a>
+                        @endif
                     @endif
                     @if(auth()->user()->isAdmin())
                         <a href="{{ route('admin.auditoria.index') }}" @if(request()->routeIs('admin.auditoria.*')) aria-current="page" @endif>Auditoría</a>
@@ -58,6 +61,31 @@
                 <button class="button" type="button" data-policy-close>Entendido</button>
             </section>
         </div>
+
+        @if(isset($alertasStockBajo) && $alertasStockBajo->isNotEmpty())
+            <div class="modal stock-alert-modal" data-stock-alert-modal>
+                <button class="modal-backdrop" type="button" data-stock-alert-close aria-label="Cerrar alerta de inventario"></button>
+                <section class="modal-card stock-alert-card" role="dialog" aria-modal="true" aria-labelledby="stock-alert-title">
+                    <button class="modal-close" type="button" data-stock-alert-close aria-label="Cerrar alerta de inventario">&times;</button>
+                    <span class="section-eyebrow">SCM</span>
+                    <h2 id="stock-alert-title">⚠ Alerta de inventario</h2>
+                    @if($alertasStockBajo->count() === 1)
+                        <p>{{ $alertasStockBajo->first()->nombre }} alcanzó un nivel bajo de inventario.</p>
+                    @else
+                        <p>{{ $alertasStockBajo->count() }} recursos requieren atención.</p>
+                    @endif
+                    <ul class="stock-alert-list">
+                        @foreach($alertasStockBajo as $producto)
+                            <li><strong>{{ $producto->nombre }}</strong><span>Stock actual: {{ $producto->stock_actual }} · Stock mínimo: {{ $producto->stock_minimo }}</span></li>
+                        @endforeach
+                    </ul>
+                    <div class="stock-alert-actions">
+                        <a class="button" href="{{ route('scm.inventario.index') }}">Ver inventario</a>
+                        <button class="back-button" type="button" data-stock-alert-close>Cerrar</button>
+                    </div>
+                </section>
+            </div>
+        @endif
 
         @stack('scripts')
     </body>

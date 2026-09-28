@@ -138,3 +138,25 @@ document.addEventListener('keydown', (event) => {
         document.body.classList.remove('modal-open');
     }
 });
+
+const stockAlertModal = document.querySelector('[data-stock-alert-modal]');
+
+if (stockAlertModal) {
+    document.body.classList.add('modal-open');
+    stockAlertModal.querySelector('.modal-close')?.focus();
+
+    const closeStockAlert = () => {
+        stockAlertModal.hidden = true;
+        document.body.classList.remove('modal-open');
+    };
+
+    stockAlertModal.querySelectorAll('[data-stock-alert-close]').forEach((button) => {
+        button.addEventListener('click', closeStockAlert);
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !stockAlertModal.hidden) {
+            closeStockAlert();
+        }
+    });
+}

@@ -382,6 +382,21 @@ h1, h2, h3 { color: var(--blue-dark); }
 .modal-card h2 { margin: 0 0 10px; }
 .modal-card p { color: var(--muted); line-height: 1.65; }
 .modal-close { position: absolute; top: 13px; right: 13px; width: 36px; height: 36px; color: var(--blue-dark); background: #edf4ff; border: 0; border-radius: 50%; cursor: pointer; font-size: 1.35rem; font-weight: 900; }
+.site-nav .nav-stock-alert { padding: 6px 10px; color: #753e00; background: #fff2d7; border: 1px solid #ffdb94; border-radius: 999px; white-space: nowrap; }
+.site-nav .nav-stock-alert:hover, .site-nav .nav-stock-alert:focus-visible { background: #ffe8b9; border-color: #f4bc54; }
+.stock-alert-card { width: min(560px, 100%); max-height: calc(100dvh - 40px); display: flex; flex-direction: column; overflow: hidden; border-top: 5px solid #e9a83a; }
+.stock-alert-card h2 { padding-right: 28px; }
+.stock-alert-card p { margin: 0 0 14px; }
+.stock-alert-list { min-height: 0; margin: 0 0 18px; padding: 0; overflow-y: auto; list-style: none; border: 1px solid #f1dfbd; border-radius: 12px; }
+.stock-alert-list li { padding: 12px 14px; display: grid; gap: 4px; background: #fffaf0; overflow-wrap: anywhere; }
+.stock-alert-list li + li { border-top: 1px solid #f1dfbd; }
+.stock-alert-list span { color: var(--muted); font-size: .9rem; }
+.stock-alert-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+@media (max-width: 460px) {
+    .stock-alert-modal { padding: 12px; }
+    .stock-alert-card { max-height: calc(100dvh - 24px); padding: 24px 18px 18px; }
+    .stock-alert-actions > * { flex: 1 1 100%; }
+}
 
 @media (max-width: 1120px) {
     .plan-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
