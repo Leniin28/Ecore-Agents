@@ -7,6 +7,8 @@ use App\Models\Auditoria;
 use App\Models\Cliente;
 use App\Models\OrdenEmpresarial;
 use App\Models\Producto;
+use App\Models\MovimientoInventario;
+use App\Services\InventarioService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -55,6 +57,88 @@ class OrdenController extends Controller
     public function apiShow(OrdenEmpresarial $orden): JsonResponse
     {
         return response()->json(['data' => $orden->load(['cliente', 'usuario:id,name', 'detalles.producto'])]);
+    }
+
+    public function procesar(Request $request, OrdenEmpresarial $orden): RedirectResponse
+    {
+        $this->procesarOrden($request, $orden);
+
+        return redirect()->route('erp.ordenes.exito', $orden);
+    }
+
+    public function apiProcesar(Request $request, OrdenEmpresarial $orden): JsonResponse
+    {
+        return response()->json(['data' => $this->procesarOrden($request, $orden)->load('detalles.movimiento')]);
+    }
+
+    public function exito(OrdenEmpresarial $orden): View
+    {
+        abort_unless($orden->estado === OrdenEmpresarial::PROCESADA, 404);
+
+        return view('erp.ordenes.exito', ['orden' => $orden->load(['cliente', 'detalles.movimiento'])]);
+    }
+
+    public function cancelar(Request $request, OrdenEmpresarial $orden): RedirectResponse
+    {
+        $this->cancelarOrden($request, $orden);
+
+        return redirect()->route('erp.ordenes.show', $orden)->with('success', 'Orden cancelada correctamente.');
+    }
+
+    public function apiCancelar(Request $request, OrdenEmpresarial $orden): JsonResponse
+    {
+        return response()->json(['data' => $this->cancelarOrden($request, $orden)]);
+    }
+
+    private function cancelarOrden(Request $request, OrdenEmpresarial $orden): OrdenEmpresarial
+    {
+        return DB::transaction(function () use ($request, $orden) {
+            $cambio = OrdenEmpresarial::query()->whereKey($orden->id)->where('estado', OrdenEmpresarial::PENDIENTE)
+                ->update(['estado' => OrdenEmpresarial::CANCELADA]);
+            if ($cambio !== 1) {
+                throw ValidationException::withMessages(['estado' => 'Solo se puede cancelar una orden pendiente.']);
+            }
+            Auditoria::registrar($request->user(), 'cancelar_orden_erp', 'orden_empresarial', $orden->id, "Canceló {$orden->folio()}.");
+
+            return $orden->fresh();
+        });
+    }
+
+    private function procesarOrden(Request $request, OrdenEmpresarial $orden): OrdenEmpresarial
+    {
+        return DB::transaction(function () use ($request, $orden) {
+            $orden = OrdenEmpresarial::query()->lockForUpdate()->findOrFail($orden->id);
+            if ($orden->estado !== OrdenEmpresarial::PENDIENTE) {
+                throw ValidationException::withMessages(['estado' => 'Solo se puede procesar una orden pendiente. Esta orden ya fue procesada o cancelada.']);
+            }
+            $detalles = $orden->detalles()->orderBy('producto_id')->get();
+            if ($detalles->isEmpty()) {
+                throw ValidationException::withMessages(['detalles' => 'La orden no tiene recursos.']);
+            }
+            $productos = Producto::query()->whereIn('id', $detalles->pluck('producto_id'))
+                ->orderBy('id')->lockForUpdate()->get()->keyBy('id');
+            foreach ($detalles as $detalle) {
+                $producto = $productos->get($detalle->producto_id);
+                if (! $producto || $producto->stock_actual < $detalle->cantidad) {
+                    throw ValidationException::withMessages(['stock' => 'Stock insuficiente para '.($producto?->nombre ?? 'un recurso').'. No se descontó ninguna línea.']);
+                }
+            }
+            // Reclamo condicional: otro intento no puede procesar la misma orden.
+            $cambio = OrdenEmpresarial::query()->whereKey($orden->id)->where('estado', OrdenEmpresarial::PENDIENTE)
+                ->update(['estado' => OrdenEmpresarial::PROCESADA, 'procesada_at' => now()]);
+            if ($cambio !== 1) {
+                throw ValidationException::withMessages(['estado' => 'La orden ya fue procesada o cancelada.']);
+            }
+            foreach ($detalles as $detalle) {
+                app(InventarioService::class)->registrar($detalle->producto_id, $request->user(), [
+                    'tipo' => MovimientoInventario::TIPO_SALIDA, 'cantidad' => $detalle->cantidad,
+                    'motivo' => MovimientoInventario::MOTIVO_VENTA, 'fecha' => now(),
+                ], $detalle->id);
+            }
+            Auditoria::registrar($request->user(), 'procesar_orden_erp', 'orden_empresarial', $orden->id, "Procesó {$orden->folio()} y actualizó el inventario SCM.");
+
+            return $orden->fresh();
+        }, 3);
     }
 
     private function crear(Request $request): OrdenEmpresarial

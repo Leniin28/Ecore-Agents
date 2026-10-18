@@ -89,16 +89,12 @@ class PedidoController extends Controller
                 throw ValidationException::withMessages(['estado' => 'El pedido ya fue surtido y no puede surtirse otra vez.']);
             }
 
-            $producto = Producto::query()->lockForUpdate()->findOrFail($pedido->producto_id);
-            $movimiento = MovimientoInventario::create([
-                'producto_id' => $producto->id,
-                'usuario_id' => $request->user()->id,
+            $movimiento = app(\App\Services\InventarioService::class)->registrar($pedido->producto_id, $request->user(), [
                 'tipo' => MovimientoInventario::TIPO_ENTRADA,
                 'cantidad' => $pedido->cantidad,
                 'motivo' => MovimientoInventario::MOTIVO_REPOSICION,
                 'fecha' => now(),
             ]);
-            $producto->increment('stock_actual', $pedido->cantidad);
             $pedido->update(['estado' => Pedido::ESTADO_SURTIDO]);
             Auditoria::registrar($request->user(), 'surtir_pedido', 'pedido', $pedido->id,
                 "Surtió el pedido #{$pedido->id} y registró la entrada #{$movimiento->id}.");

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable(['orden_empresarial_id', 'producto_id', 'cantidad', 'precio_unitario', 'subtotal'])]
 class OrdenDetalle extends Model
@@ -22,5 +23,10 @@ class OrdenDetalle extends Model
     protected function casts(): array
     {
         return ['cantidad' => 'integer', 'precio_unitario' => 'decimal:2', 'subtotal' => 'decimal:2'];
+    }
+
+    public function movimiento(): HasOne
+    {
+        return $this->hasOne(MovimientoInventario::class);
     }
 }

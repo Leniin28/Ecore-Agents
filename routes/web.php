@@ -51,6 +51,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/recursos', [\App\Http\Controllers\Erp\RecursoController::class, 'index'])->name('recursos');
         Route::view('/', 'erp.base', ['titulo' => 'Dashboard ERP'])->name('dashboard');
         Route::resource('ordenes', \App\Http\Controllers\Erp\OrdenController::class)->only(['index', 'create', 'store', 'show'])->parameters(['ordenes' => 'orden']);
+        Route::post('/ordenes/{orden}/procesar', [\App\Http\Controllers\Erp\OrdenController::class, 'procesar'])->name('ordenes.procesar');
+        Route::post('/ordenes/{orden}/cancelar', [\App\Http\Controllers\Erp\OrdenController::class, 'cancelar'])->name('ordenes.cancelar');
+        Route::get('/ordenes/{orden}/exito', [\App\Http\Controllers\Erp\OrdenController::class, 'exito'])->name('ordenes.exito');
         Route::view('/procesos', 'erp.base', ['titulo' => 'Procesos internos'])->name('procesos');
         Route::view('/nivel', 'erp.base', ['titulo' => 'Nivel ERP'])->name('nivel');
         Route::view('/reportes', 'erp.base', ['titulo' => 'Reportes ERP'])->name('reportes');
@@ -60,6 +63,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/ordenes', [\App\Http\Controllers\Erp\OrdenController::class, 'apiIndex'])->name('ordenes.index');
         Route::post('/ordenes', [\App\Http\Controllers\Erp\OrdenController::class, 'apiStore'])->name('ordenes.store');
         Route::get('/ordenes/{orden}', [\App\Http\Controllers\Erp\OrdenController::class, 'apiShow'])->name('ordenes.show');
+        Route::post('/ordenes/{orden}/procesar', [\App\Http\Controllers\Erp\OrdenController::class, 'apiProcesar'])->name('ordenes.procesar');
+        Route::post('/ordenes/{orden}/cancelar', [\App\Http\Controllers\Erp\OrdenController::class, 'apiCancelar'])->name('ordenes.cancelar');
     });
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 

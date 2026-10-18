@@ -3,18 +3,14 @@
 namespace App\Http\Controllers\Scm;
 
 use App\Http\Controllers\Controller;
-use App\Models\Auditoria;
 use App\Models\MovimientoInventario;
 use App\Models\Producto;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
-use App\Services\ScmReposicionService;
 
 class MovimientoInventarioController extends Controller
 {
@@ -67,33 +63,7 @@ class MovimientoInventarioController extends Controller
     /** @param array<string, mixed> $data */
     private function registrar(Request $request, array $data): MovimientoInventario
     {
-        return DB::transaction(function () use ($request, $data): MovimientoInventario {
-            $producto = Producto::query()->lockForUpdate()->findOrFail($data['producto_id']);
-
-            if ($data['tipo'] === MovimientoInventario::TIPO_SALIDA && $producto->stock_actual < $data['cantidad']) {
-                throw ValidationException::withMessages(['cantidad' => 'La salida no puede dejar el stock en negativo.']);
-            }
-
-            $nuevoStock = $data['tipo'] === MovimientoInventario::TIPO_ENTRADA
-                ? $producto->stock_actual + $data['cantidad']
-                : $producto->stock_actual - $data['cantidad'];
-
-            $movimiento = $producto->movimientos()->create([
-                'usuario_id' => $request->user()->id,
-                'tipo' => $data['tipo'],
-                'cantidad' => $data['cantidad'],
-                'motivo' => $data['motivo'],
-                'fecha' => $data['fecha'],
-            ]);
-            $producto->update(['stock_actual' => $nuevoStock]);
-            if ($movimiento->tipo === MovimientoInventario::TIPO_SALIDA) {
-                app(ScmReposicionService::class)->generarPushSiCorresponde($producto->fresh());
-            }
-            Auditoria::registrar($request->user(), 'registrar_movimiento', 'movimiento_inventario', $movimiento->id,
-                "Registró {$movimiento->tipo} de {$movimiento->cantidad} unidades para {$producto->nombre}.");
-
-            return $movimiento;
-        });
+        return app(\App\Services\InventarioService::class)->registrar($data['producto_id'], $request->user(), $data);
     }
 
     private function validated(Request $request): array

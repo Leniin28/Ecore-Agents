@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['cliente_id', 'usuario_id', 'fecha', 'estado', 'total'])]
+#[Fillable(['cliente_id', 'usuario_id', 'fecha', 'estado', 'total', 'procesada_at'])]
 class OrdenEmpresarial extends Model
 {
     protected $table = 'ordenes_empresariales';
@@ -39,6 +39,6 @@ class OrdenEmpresarial extends Model
 
     protected function casts(): array
     {
-        return ['fecha' => 'datetime', 'total' => 'decimal:2'];
+        return ['fecha' => 'datetime', 'procesada_at' => 'datetime', 'total' => 'decimal:2'];
     }
 }

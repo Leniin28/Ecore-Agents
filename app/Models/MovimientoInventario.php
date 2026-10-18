@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['producto_id', 'usuario_id', 'tipo', 'cantidad', 'motivo', 'fecha'])]
+#[Fillable(['producto_id', 'usuario_id', 'tipo', 'cantidad', 'motivo', 'fecha', 'orden_detalle_id'])]
 class MovimientoInventario extends Model
 {
     use HasFactory;
@@ -36,6 +36,11 @@ class MovimientoInventario extends Model
     public function usuario(): BelongsTo
     {
         return $this->belongsTo(User::class, 'usuario_id');
+    }
+
+    public function ordenDetalle(): BelongsTo
+    {
+        return $this->belongsTo(OrdenDetalle::class);
     }
 
     protected function casts(): array
