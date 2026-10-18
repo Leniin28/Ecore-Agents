@@ -28,7 +28,7 @@ class EstadoErp extends Model
     {
         return [
             'CRM integrado' => true, 'SCM integrado' => true, 'Órdenes empresariales' => true,
-            'Movimientos automáticos' => true, 'Reportes ERP' => false,
+            'Movimientos automáticos' => true, 'Reportes ERP' => true,
             'Procesos optimizados (declarado)' => $this->nivel === 'optimizado',
         ];
     }

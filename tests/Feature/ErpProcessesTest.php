@@ -21,7 +21,7 @@ class ErpProcessesTest extends TestCase
         $this->assertSame(['orden_creada'], $order->procesosInternos()->pluck('tipo')->all());
         $this->postJson("/api/erp/ordenes/{$order->id}/procesar")->assertOk();
         $this->assertSame(['orden_creada', 'stock_validado', 'inventario_actualizado', 'movimientos_registrados', 'orden_procesada'],
-            $order->procesosInternos()->orderBy('id')->pluck('tipo')->all());
+            $order->procesosInternos()->pluck('tipo')->all());
         $this->assertSame(1, $other->procesosInternos()->count());
         $this->assertSame([$user->id], $order->procesosInternos()->distinct()->pluck('usuario_id')->all());
         $this->get('/erp/procesos?orden='.$order->folio().'&tipo=orden_procesada&estado=completado')->assertOk()

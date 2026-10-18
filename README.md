@@ -18,6 +18,18 @@ SCM adapta la cadena de suministro al negocio digital: OpenRouter puede registra
 
 El módulo incluye proveedores, recursos IA, inventario calculado desde el stock de cada producto, movimientos trazables, pedidos y estrategias PUSH/PULL. PUSH genera una reposición pendiente al llegar al mínimo sin duplicarla; PULL utiliza pedidos manuales. Al surtir un pedido se crea atómicamente una entrada y aumenta el stock. El dashboard resume consumo de los últimos 30 días, baja utilización, inventario crítico, estrategias, pedidos y nivel de madurez SCM. No se usan API keys, cobros ni llamadas reales a OpenRouter.
 
+## Etapa 3 académica: ERP integrado
+
+ERP reutiliza clientes CRM y productos, inventario, movimientos y reposición SCM. `/erp` muestra métricas empresariales; `/erp/recursos` es una consulta del catálogo SCM. El precio de venta se guarda separado del costo interno.
+
+Las órdenes se crean en `/erp/ordenes/create` con cliente, recursos y resumen. El servidor calcula el total en centavos y conserva el precio de cada línea. Crear deja la orden pendiente; procesarla valida todas las existencias y ejecuta salidas mediante `InventarioService` dentro de una sola transacción. Una falla revierte stock, movimientos, pedidos PUSH, procesos y auditoría. Solo las pendientes pueden procesarse o cancelarse. Las procesadas no admiten un segundo procesamiento ni devoluciones.
+
+`/erp/procesos` muestra los pasos operativos de las órdenes; la auditoría identifica acciones de usuarios en todo el sistema. `/erp/nivel` permite declarar el nivel académico Básico, Integrado, Automatizado u Optimizado. No es una certificación automática de madurez.
+
+Los empleados necesitan permiso `erp`. Ventas sugiere CRM + ERP y Logística SCM + ERP; el administrador puede ajustar esos permisos. El perfil no otorga acceso por sí mismo. Los clientes públicos no acceden a módulos internos.
+
+API ERP con sesión Laravel y CSRF: `GET/POST /api/erp/ordenes`, `GET /api/erp/ordenes/{orden}`, `POST .../{orden}/procesar`, `POST .../{orden}/cancelar`, `GET /api/erp/metricas` y `GET/PUT /api/erp/estado`. Las ventas y unidades vendidas cuentan solo órdenes procesadas; el gráfico de seis meses usa la fecha de procesamiento. Las cantidades son unidades internas de capacidad IA, sin cobros ni llamadas externas.
+
 ## API REST del CRM
 
 Los endpoints `GET`, `POST`, `PUT` y `DELETE` bajo `/api/clientes` consultan y persisten clientes mediante Eloquent. La respuesta de cada cliente incluye `etapa_crm` y la etapa puede actualizarse con `PUT /api/clientes/{cliente}/etapa`.
@@ -93,7 +105,15 @@ php artisan migrate
 php artisan db:seed --class=DemoDataSeeder
 ```
 
-Empleado SCM demo: `empleado.scm@ecore.local` / `ECoreDemo2026!`. Los datos no llaman servicios externos ni usan claves reales. El archivo `database/database.sqlite` permanece local e ignorado por Git.
+El seeder agrega también dos clientes ficticios y seis órdenes ERP (cuatro procesadas, una pendiente y una cancelada), sus detalles, movimientos vinculados, procesos internos y nivel Automatizado. Reejecutarlo restablece los datos demo; úsalo sobre una base local destinada a demostración.
+
+Credenciales exclusivamente locales, todas con contraseña `ECoreDemo2026!`:
+
+- Administrador existente: `admin@ecore.local` (creado por `php artisan db:seed` en entorno local).
+- Logística SCM + ERP: `empleado.scm@ecore.local`.
+- Ventas CRM + ERP: `ventas.demo@ecore.local`.
+
+Los datos no llaman servicios externos ni usan claves reales. El archivo `database/database.sqlite` permanece local e ignorado por Git. Los seeders omiten datos demo fuera de local/testing; nunca ejecutar `migrate:fresh` sobre una base que deba conservarse.
 
 ## Ejecución local
 

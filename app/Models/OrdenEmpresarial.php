@@ -39,7 +39,7 @@ class OrdenEmpresarial extends Model
 
     public function procesosInternos(): HasMany
     {
-        return $this->hasMany(ProcesoInterno::class);
+        return $this->hasMany(ProcesoInterno::class)->orderBy('id');
     }
 
     protected function casts(): array

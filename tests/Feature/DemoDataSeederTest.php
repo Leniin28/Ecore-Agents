@@ -8,6 +8,10 @@ use App\Models\Pedido;
 use App\Models\Producto;
 use App\Models\Proveedor;
 use App\Models\User;
+use App\Models\Cliente;
+use App\Models\OrdenEmpresarial;
+use App\Models\OrdenDetalle;
+use App\Models\ProcesoInterno;
 use Database\Seeders\DemoDataSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -22,11 +26,12 @@ class DemoDataSeederTest extends TestCase
         $this->seed(DemoDataSeeder::class);
 
         $firstCounts = $this->counts();
-        $this->assertSame(['users' => 1, 'suppliers' => 1, 'products' => 5, 'movements' => 12, 'orders' => 4, 'audits' => 0], $firstCounts);
+        $this->assertSame(['users' => 2, 'suppliers' => 1, 'products' => 5, 'movements' => 20, 'orders' => 4, 'audits' => 0,
+            'clients' => 2, 'erp_orders' => 6, 'erp_details' => 12, 'processes' => 23], $firstCounts);
 
         $employee = User::query()->where('email', 'empleado.scm@ecore.local')->firstOrFail();
         $this->assertSame(User::ROLE_EMPLEADO, $employee->role);
-        $this->assertSame([User::MODULE_SCM], $employee->permissions);
+        $this->assertSame([User::MODULE_SCM, User::MODULE_ERP], $employee->permissions);
         $this->assertTrue(Hash::check('ECoreDemo2026!', $employee->password));
         $this->assertSame(3, Producto::query()->where('estrategia_logistica', Producto::ESTRATEGIA_PUSH)->count());
         $this->assertSame(2, Producto::query()->where('estrategia_logistica', Producto::ESTRATEGIA_PULL)->count());
@@ -37,6 +42,8 @@ class DemoDataSeederTest extends TestCase
 
         $this->assertSame($firstCounts, $this->counts());
         $this->assertSame(5, Producto::query()->distinct()->count('nombre'));
+        $this->assertSame(600, Producto::query()->where('nombre', 'Capacidad de razonamiento')->first()->stock_actual);
+        $this->assertSame(3060, Producto::query()->where('nombre', 'Capacidad general')->first()->stock_actual);
     }
 
     /** @return array<string, int> */
@@ -49,6 +56,10 @@ class DemoDataSeederTest extends TestCase
             'movements' => MovimientoInventario::query()->count(),
             'orders' => Pedido::query()->count(),
             'audits' => Auditoria::query()->count(),
+            'clients' => Cliente::query()->count(),
+            'erp_orders' => OrdenEmpresarial::query()->count(),
+            'erp_details' => OrdenDetalle::query()->count(),
+            'processes' => ProcesoInterno::query()->count(),
         ];
     }
 }

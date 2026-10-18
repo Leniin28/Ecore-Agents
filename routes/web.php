@@ -49,7 +49,7 @@ Route::middleware('guest')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::prefix('erp')->name('erp.')->middleware('module:erp')->group(function () {
         Route::get('/recursos', [\App\Http\Controllers\Erp\RecursoController::class, 'index'])->name('recursos');
-        Route::view('/', 'erp.base', ['titulo' => 'Dashboard ERP'])->name('dashboard');
+        Route::get('/', [\App\Http\Controllers\Erp\DashboardController::class, 'index'])->name('dashboard');
         Route::resource('ordenes', \App\Http\Controllers\Erp\OrdenController::class)->only(['index', 'create', 'store', 'show'])->parameters(['ordenes' => 'orden']);
         Route::post('/ordenes/{orden}/procesar', [\App\Http\Controllers\Erp\OrdenController::class, 'procesar'])->name('ordenes.procesar');
         Route::post('/ordenes/{orden}/cancelar', [\App\Http\Controllers\Erp\OrdenController::class, 'cancelar'])->name('ordenes.cancelar');
@@ -58,10 +58,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/nivel', [\App\Http\Controllers\Erp\EstadoController::class, 'index'])->name('nivel');
         Route::get('/estado', [\App\Http\Controllers\Erp\EstadoController::class, 'estado'])->name('estado');
         Route::put('/estado', [\App\Http\Controllers\Erp\EstadoController::class, 'update'])->name('estado.update');
-        Route::view('/reportes', 'erp.base', ['titulo' => 'Reportes ERP'])->name('reportes');
+        Route::get('/reportes', [\App\Http\Controllers\Erp\DashboardController::class, 'reportes'])->name('reportes');
     });
     Route::get('/perfil', [ProfileController::class, 'show'])->name('profile');
     Route::prefix('api/erp')->name('api.erp.')->middleware('module:erp')->group(function () {
+        Route::get('/metricas', [\App\Http\Controllers\Erp\DashboardController::class, 'metricas'])->name('metricas');
         Route::get('/estado', [\App\Http\Controllers\Erp\EstadoController::class, 'estado'])->name('estado');
         Route::put('/estado', [\App\Http\Controllers\Erp\EstadoController::class, 'apiUpdate'])->name('estado.update');
         Route::get('/ordenes', [\App\Http\Controllers\Erp\OrdenController::class, 'apiIndex'])->name('ordenes.index');
