@@ -8,6 +8,7 @@ use App\Models\Cliente;
 use App\Models\OrdenEmpresarial;
 use App\Models\Producto;
 use App\Models\MovimientoInventario;
+use App\Models\ProcesoInterno;
 use App\Services\InventarioService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -41,7 +42,7 @@ class OrdenController extends Controller
 
     public function show(OrdenEmpresarial $orden): View
     {
-        return view('erp.ordenes.show', ['orden' => $orden->load(['cliente', 'usuario', 'detalles.producto'])]);
+        return view('erp.ordenes.show', ['orden' => $orden->load(['cliente', 'usuario', 'detalles.producto', 'procesosInternos.usuario'])]);
     }
 
     public function apiIndex(Request $request): JsonResponse
@@ -56,7 +57,7 @@ class OrdenController extends Controller
 
     public function apiShow(OrdenEmpresarial $orden): JsonResponse
     {
-        return response()->json(['data' => $orden->load(['cliente', 'usuario:id,name', 'detalles.producto'])]);
+        return response()->json(['data' => $orden->load(['cliente', 'usuario:id,name', 'detalles.producto', 'procesosInternos'])]);
     }
 
     public function procesar(Request $request, OrdenEmpresarial $orden): RedirectResponse
@@ -75,7 +76,7 @@ class OrdenController extends Controller
     {
         abort_unless($orden->estado === OrdenEmpresarial::PROCESADA, 404);
 
-        return view('erp.ordenes.exito', ['orden' => $orden->load(['cliente', 'detalles.movimiento'])]);
+        return view('erp.ordenes.exito', ['orden' => $orden->load(['cliente', 'detalles.movimiento', 'procesosInternos'])]);
     }
 
     public function cancelar(Request $request, OrdenEmpresarial $orden): RedirectResponse
@@ -99,6 +100,7 @@ class OrdenController extends Controller
                 throw ValidationException::withMessages(['estado' => 'Solo se puede cancelar una orden pendiente.']);
             }
             Auditoria::registrar($request->user(), 'cancelar_orden_erp', 'orden_empresarial', $orden->id, "Canceló {$orden->folio()}.");
+            $this->registrarProceso($orden, $request, 'orden_cancelada');
 
             return $orden->fresh();
         });
@@ -123,6 +125,7 @@ class OrdenController extends Controller
                     throw ValidationException::withMessages(['stock' => 'Stock insuficiente para '.($producto?->nombre ?? 'un recurso').'. No se descontó ninguna línea.']);
                 }
             }
+            $this->registrarProceso($orden, $request, 'stock_validado');
             // Reclamo condicional: otro intento no puede procesar la misma orden.
             $cambio = OrdenEmpresarial::query()->whereKey($orden->id)->where('estado', OrdenEmpresarial::PENDIENTE)
                 ->update(['estado' => OrdenEmpresarial::PROCESADA, 'procesada_at' => now()]);
@@ -136,6 +139,9 @@ class OrdenController extends Controller
                 ], $detalle->id);
             }
             Auditoria::registrar($request->user(), 'procesar_orden_erp', 'orden_empresarial', $orden->id, "Procesó {$orden->folio()} y actualizó el inventario SCM.");
+            $this->registrarProceso($orden, $request, 'inventario_actualizado');
+            $this->registrarProceso($orden, $request, 'movimientos_registrados');
+            $this->registrarProceso($orden, $request, 'orden_procesada');
 
             return $orden->fresh();
         }, 3);
@@ -179,10 +185,19 @@ class OrdenController extends Controller
                 'fecha' => now(), 'estado' => OrdenEmpresarial::PENDIENTE, 'total' => $this->decimal($totalCentavos),
             ]);
             $orden->detalles()->createMany($detalles);
+            $this->registrarProceso($orden, $request, 'orden_creada');
             Auditoria::registrar($request->user(), 'crear_orden_erp', 'orden_empresarial', $orden->id, "Creó {$orden->folio()}.");
 
             return $orden;
         });
+    }
+
+    private function registrarProceso(OrdenEmpresarial $orden, Request $request, string $tipo): void
+    {
+        $orden->procesosInternos()->create([
+            'usuario_id' => $request->user()->id, 'tipo' => $tipo,
+            'descripcion' => ProcesoInterno::TIPOS[$tipo], 'estado' => 'completado', 'fecha' => now(),
+        ]);
     }
 
     private function decimal(int $centavos): string

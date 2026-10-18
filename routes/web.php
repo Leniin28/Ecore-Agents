@@ -54,12 +54,16 @@ Route::middleware('auth')->group(function () {
         Route::post('/ordenes/{orden}/procesar', [\App\Http\Controllers\Erp\OrdenController::class, 'procesar'])->name('ordenes.procesar');
         Route::post('/ordenes/{orden}/cancelar', [\App\Http\Controllers\Erp\OrdenController::class, 'cancelar'])->name('ordenes.cancelar');
         Route::get('/ordenes/{orden}/exito', [\App\Http\Controllers\Erp\OrdenController::class, 'exito'])->name('ordenes.exito');
-        Route::view('/procesos', 'erp.base', ['titulo' => 'Procesos internos'])->name('procesos');
-        Route::view('/nivel', 'erp.base', ['titulo' => 'Nivel ERP'])->name('nivel');
+        Route::get('/procesos', [\App\Http\Controllers\Erp\ProcesoController::class, 'index'])->name('procesos');
+        Route::get('/nivel', [\App\Http\Controllers\Erp\EstadoController::class, 'index'])->name('nivel');
+        Route::get('/estado', [\App\Http\Controllers\Erp\EstadoController::class, 'estado'])->name('estado');
+        Route::put('/estado', [\App\Http\Controllers\Erp\EstadoController::class, 'update'])->name('estado.update');
         Route::view('/reportes', 'erp.base', ['titulo' => 'Reportes ERP'])->name('reportes');
     });
     Route::get('/perfil', [ProfileController::class, 'show'])->name('profile');
     Route::prefix('api/erp')->name('api.erp.')->middleware('module:erp')->group(function () {
+        Route::get('/estado', [\App\Http\Controllers\Erp\EstadoController::class, 'estado'])->name('estado');
+        Route::put('/estado', [\App\Http\Controllers\Erp\EstadoController::class, 'apiUpdate'])->name('estado.update');
         Route::get('/ordenes', [\App\Http\Controllers\Erp\OrdenController::class, 'apiIndex'])->name('ordenes.index');
         Route::post('/ordenes', [\App\Http\Controllers\Erp\OrdenController::class, 'apiStore'])->name('ordenes.store');
         Route::get('/ordenes/{orden}', [\App\Http\Controllers\Erp\OrdenController::class, 'apiShow'])->name('ordenes.show');

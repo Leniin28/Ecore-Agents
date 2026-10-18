@@ -37,6 +37,11 @@ class OrdenEmpresarial extends Model
         return 'ORD-'.str_pad((string) $this->id, 5, '0', STR_PAD_LEFT);
     }
 
+    public function procesosInternos(): HasMany
+    {
+        return $this->hasMany(ProcesoInterno::class);
+    }
+
     protected function casts(): array
     {
         return ['fecha' => 'datetime', 'procesada_at' => 'datetime', 'total' => 'decimal:2'];

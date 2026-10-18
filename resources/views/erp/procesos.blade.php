@@ -1,0 +1,7 @@
+@extends('erp.layout')
+@section('erp-title', 'Procesos internos')
+@section('erp-description', 'Pasos operativos completados para cada orden empresarial.')
+@section('erp-content')
+<form class="customer-filters" method="get"><label>Folio o ID de orden<input name="orden" value="{{ request('orden') }}"></label><label>Tipo<select name="tipo"><option value="">Todos</option>@foreach(\App\Models\ProcesoInterno::TIPOS as $value => $label)<option value="{{ $value }}" @selected(request('tipo') === $value)>{{ $label }}</option>@endforeach</select></label><label>Estado<select name="estado"><option value="">Todos</option><option value="completado" @selected(request('estado') === 'completado')>Completado</option></select></label><button class="button" type="submit">Filtrar</button></form>
+<div class="table-wrap"><table><thead><tr><th>Orden</th><th>Cliente</th><th>Proceso</th><th>Estado</th><th>Fecha</th><th>Responsable</th></tr></thead><tbody>@forelse($procesos as $proceso)<tr><td><a href="{{ route('erp.ordenes.show', $proceso->ordenEmpresarial) }}">{{ $proceso->ordenEmpresarial->folio() }}</a></td><td>{{ $proceso->ordenEmpresarial->cliente->nombre }}</td><td>{{ $proceso->descripcion }}</td><td>{{ ucfirst($proceso->estado) }}</td><td>{{ $proceso->fecha->format('d/m/Y H:i') }}</td><td>{{ $proceso->usuario?->name ?? 'Sistema' }}</td></tr>@empty<tr><td colspan="6">Sin procesos registrados.</td></tr>@endforelse</tbody></table></div>{{ $procesos->links() }}
+@endsection
