@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role', 'permissions'])]
+#[Fillable(['name', 'email', 'password', 'role', 'permissions', 'perfil_empresarial'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -31,7 +31,11 @@ class User extends Authenticatable
 
     public const MODULE_SCM = 'scm';
 
-    public const MODULES = [self::MODULE_CRM, self::MODULE_SCM];
+    public const MODULE_ERP = 'erp';
+
+    public const MODULES = [self::MODULE_CRM, self::MODULE_SCM, self::MODULE_ERP];
+
+    public const PERFILES = ['ventas' => 'Ventas', 'logistica' => 'Logística'];
 
     public function isAdmin(): bool
     {

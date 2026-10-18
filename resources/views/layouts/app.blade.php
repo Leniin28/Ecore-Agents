@@ -32,7 +32,10 @@
                         @endif
                     @endif
                     @if(auth()->user()->isAdmin())
+                        <a href="{{ route('erp.dashboard') }}" @if(request()->routeIs('erp.*')) aria-current="page" @endif>ERP</a>
                         <a href="{{ route('admin.auditoria.index') }}" @if(request()->routeIs('admin.auditoria.*')) aria-current="page" @endif>Auditoría</a>
+                    @elseif(auth()->user()->hasModuleAccess('erp'))
+                        <a href="{{ route('erp.dashboard') }}" @if(request()->routeIs('erp.*')) aria-current="page" @endif>ERP</a>
                     @endif
                     <form class="nav-logout-form" method="post" action="{{ route('logout') }}">
                         @csrf

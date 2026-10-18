@@ -39,6 +39,7 @@ class UserController extends Controller
                 'password' => $validated['password'],
                 'role' => $validated['role'],
                 'permissions' => $permissions,
+                'perfil_empresarial' => $validated['role'] === User::ROLE_EMPLEADO ? ($validated['perfil_empresarial'] ?? null) : null,
             ]);
 
             Auditoria::registrar(
@@ -82,13 +83,20 @@ class UserController extends Controller
 
             $oldRole = $usuario->role;
             $oldPermissions = $usuario->permissions ?? [];
+            $oldProfile = $usuario->perfil_empresarial;
             $newPermissions = $this->permissionsForRole($validated['role'], $validated['permissions'] ?? []);
 
             $usuario->update([
                 'name' => $validated['name'],
                 'role' => $validated['role'],
                 'permissions' => $newPermissions,
+                'perfil_empresarial' => $validated['role'] === User::ROLE_EMPLEADO ? ($validated['perfil_empresarial'] ?? null) : null,
             ]);
+
+            if ($oldProfile !== $usuario->perfil_empresarial) {
+                Auditoria::registrar($request->user(), 'cambiar_perfil_empresarial', 'usuario', $usuario->id,
+                    "Cambió el perfil empresarial de {$usuario->name} a ".($usuario->perfil_empresarial ?? 'sin asignar').'.');
+            }
 
             if ($oldRole !== $usuario->role) {
                 Auditoria::registrar($request->user(), 'cambiar_rol', 'usuario', $usuario->id,
@@ -136,6 +144,7 @@ class UserController extends Controller
             'role' => ['required', Rule::in([User::ROLE_EMPLEADO, User::ROLE_ADMIN])],
             'permissions' => ['nullable', 'array'],
             'permissions.*' => [Rule::in(User::MODULES)],
+            'perfil_empresarial' => ['nullable', Rule::in(array_keys(User::PERFILES))],
         ];
     }
 
@@ -147,6 +156,7 @@ class UserController extends Controller
             'role' => ['required', Rule::in([User::ROLE_EMPLEADO, User::ROLE_ADMIN])],
             'permissions' => ['nullable', 'array'],
             'permissions.*' => [Rule::in(User::MODULES)],
+            'perfil_empresarial' => ['nullable', Rule::in(array_keys(User::PERFILES))],
         ];
     }
 

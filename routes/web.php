@@ -47,6 +47,14 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::prefix('erp')->name('erp.')->middleware('module:erp')->group(function () {
+        Route::get('/recursos', [\App\Http\Controllers\Erp\RecursoController::class, 'index'])->name('recursos');
+        Route::view('/', 'erp.base', ['titulo' => 'Dashboard ERP'])->name('dashboard');
+        Route::view('/ordenes', 'erp.base', ['titulo' => 'Órdenes empresariales'])->name('ordenes.index');
+        Route::view('/procesos', 'erp.base', ['titulo' => 'Procesos internos'])->name('procesos');
+        Route::view('/nivel', 'erp.base', ['titulo' => 'Nivel ERP'])->name('nivel');
+        Route::view('/reportes', 'erp.base', ['titulo' => 'Reportes ERP'])->name('reportes');
+    });
     Route::get('/perfil', [ProfileController::class, 'show'])->name('profile');
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 

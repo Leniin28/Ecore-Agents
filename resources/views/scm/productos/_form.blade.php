@@ -7,7 +7,9 @@
 <label>Proveedor<select name="proveedor_id" required><option value="">Selecciona</option>@foreach($proveedores as $proveedor)<option value="{{ $proveedor->id }}" @selected(old('proveedor_id', $producto->proveedor_id ?? '') == $proveedor->id)>{{ $proveedor->nombre }}</option>@endforeach</select></label>
 @error('proveedor_id') <p class="form-error">{{ $message }}</p> @enderror
 <div class="form-grid"><label>Stock actual<input type="number" min="0" name="stock_actual" value="{{ old('stock_actual', $producto->stock_actual ?? 0) }}" required></label><label>Stock mínimo<input type="number" min="0" name="stock_minimo" value="{{ old('stock_minimo', $producto->stock_minimo ?? 0) }}" required></label></div>
-<label>Costo unitario<input type="number" min="0" step="0.01" name="costo_unitario" value="{{ old('costo_unitario', $producto->costo_unitario ?? 0) }}" required></label>
+<label>Costo interno unitario<input type="number" min="0" step="0.01" name="costo_unitario" value="{{ old('costo_unitario', $producto->costo_unitario ?? 0) }}" required></label>
+<label>Precio de venta unitario<input type="number" min="0" max="9999999999.99" step="0.01" name="precio_venta_unitario" value="{{ old('precio_venta_unitario', $producto->precio_venta_unitario ?? 0) }}" required></label>
+@error('precio_venta_unitario') <p class="form-error">{{ $message }}</p> @enderror
 <label>Estrategia logística<select name="estrategia_logistica" required><option value="PUSH" @selected(old('estrategia_logistica', $producto->estrategia_logistica ?? 'PULL') === 'PUSH')>PUSH</option><option value="PULL" @selected(old('estrategia_logistica', $producto->estrategia_logistica ?? 'PULL') === 'PULL')>PULL</option></select></label>
 @error('estrategia_logistica') <p class="form-error">{{ $message }}</p> @enderror
 <button class="button" type="submit">Guardar recurso IA</button>

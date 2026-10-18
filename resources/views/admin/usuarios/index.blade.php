@@ -17,7 +17,7 @@
             <tbody>
             @forelse($usuarios as $usuario)
                 <tr>
-                    <td>{{ $usuario->name }}</td><td>{{ $usuario->email }}</td><td>{{ $usuario->roleLabel() }}</td>
+                    <td>{{ $usuario->name }}</td><td>{{ $usuario->email }}</td><td>{{ $usuario->roleLabel() }}@if($usuario->isEmployee() && $usuario->perfil_empresarial)<br>{{ \App\Models\User::PERFILES[$usuario->perfil_empresarial] ?? 'Sin asignar' }}@endif</td>
                     <td>{{ $usuario->isAdmin() ? 'Acceso total' : ($usuario->permissions ? strtoupper(implode(', ', $usuario->permissions)) : 'Sin acceso interno') }}</td>
                     <td>{{ $usuario->cliente?->nombre ?? '—' }}</td>
                     <td class="table-actions">

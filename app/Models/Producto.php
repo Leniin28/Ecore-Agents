@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-#[Fillable(['nombre', 'descripcion', 'categoria', 'stock_actual', 'stock_minimo', 'proveedor_id', 'costo_unitario', 'estrategia_logistica'])]
+#[Fillable(['nombre', 'descripcion', 'categoria', 'stock_actual', 'stock_minimo', 'proveedor_id', 'costo_unitario', 'precio_venta_unitario', 'estrategia_logistica'])]
 class Producto extends Model
 {
     use HasFactory;
@@ -40,6 +40,7 @@ class Producto extends Model
             'stock_actual' => 'integer',
             'stock_minimo' => 'integer',
             'costo_unitario' => 'decimal:2',
+            'precio_venta_unitario' => 'decimal:2',
         ];
     }
 }

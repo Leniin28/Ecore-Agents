@@ -118,6 +118,7 @@ class ProductoController extends Controller
             'stock_minimo' => ['required', 'integer', 'min:0'],
             'proveedor_id' => ['required', 'integer', 'exists:proveedores,id'],
             'costo_unitario' => ['required', 'numeric', 'min:0'],
+            'precio_venta_unitario' => ['sometimes', 'required', 'numeric', 'min:0', 'max:9999999999.99', 'decimal:0,2'],
             'estrategia_logistica' => ['required', Rule::in(Producto::ESTRATEGIAS)],
         ], [
             'nombre.required' => 'El nombre es obligatorio.',
@@ -133,7 +134,7 @@ class ProductoController extends Controller
     private function serialize(Producto $producto): array
     {
         return [
-            ...$producto->only(['id', 'nombre', 'descripcion', 'categoria', 'stock_actual', 'stock_minimo', 'proveedor_id', 'costo_unitario', 'estrategia_logistica', 'created_at', 'updated_at']),
+            ...$producto->only(['id', 'nombre', 'descripcion', 'categoria', 'stock_actual', 'stock_minimo', 'proveedor_id', 'costo_unitario', 'precio_venta_unitario', 'estrategia_logistica', 'created_at', 'updated_at']),
             'proveedor' => $producto->proveedor?->only(['id', 'nombre']),
         ];
     }
