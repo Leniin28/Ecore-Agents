@@ -78,6 +78,11 @@ class User extends Authenticatable
         return $this->hasOne(Cliente::class);
     }
 
+    public function ordenesEmpresariales(): HasMany
+    {
+        return $this->hasMany(OrdenEmpresarial::class, 'usuario_id');
+    }
+
     /**
      * Get the attributes that should be cast.
      *

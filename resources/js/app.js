@@ -1,3 +1,5 @@
+import './erp';
+
 const formatMoney = (value) => `$${Number(value).toLocaleString('es-MX')}`;
 
 document.querySelectorAll('[data-demo-form]').forEach((form) => {

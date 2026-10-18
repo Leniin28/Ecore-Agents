@@ -34,6 +34,11 @@ class Producto extends Model
         return $this->hasMany(Pedido::class);
     }
 
+    public function ordenDetalles(): HasMany
+    {
+        return $this->hasMany(OrdenDetalle::class);
+    }
+
     protected function casts(): array
     {
         return [

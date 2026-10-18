@@ -141,8 +141,8 @@ class ProductoController extends Controller
 
     private function ensureWithoutMovements(Producto $producto): void
     {
-        if ($producto->movimientos()->exists() || $producto->pedidos()->exists()) {
-            throw ValidationException::withMessages(['producto' => 'No se puede eliminar un producto con movimientos o pedidos.']);
+        if ($producto->movimientos()->exists() || $producto->pedidos()->exists() || $producto->ordenDetalles()->exists()) {
+            throw ValidationException::withMessages(['producto' => 'No se puede eliminar un producto con movimientos o pedidos. También se conservan los recursos vinculados a órdenes ERP.']);
         }
     }
 }

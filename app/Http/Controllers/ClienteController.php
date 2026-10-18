@@ -70,6 +70,7 @@ class ClienteController extends Controller
     public function destroy(Request $request, Cliente $cliente): RedirectResponse
     {
         $this->authorizeDeletion($request);
+        $this->ensureWithoutOrders($cliente);
         Auditoria::registrar($request->user(), 'eliminar', 'cliente', $cliente->id, "Eliminó al cliente {$cliente->nombre}.");
         $cliente->delete();
 
@@ -120,6 +121,7 @@ class ClienteController extends Controller
     public function apiDestroy(Request $request, Cliente $cliente): Response
     {
         $this->authorizeDeletion($request);
+        $this->ensureWithoutOrders($cliente);
         Auditoria::registrar($request->user(), 'eliminar', 'cliente', $cliente->id, "Eliminó al cliente {$cliente->nombre} mediante API.");
         $cliente->delete();
 
@@ -132,6 +134,13 @@ class ClienteController extends Controller
         Auditoria::registrar($request->user(), 'cambiar_etapa', 'cliente', $cliente->id, "Cambió la etapa CRM de {$cliente->nombre} a {$cliente->etapa_crm} mediante API.");
 
         return response()->json(['data' => $this->serializeCliente($cliente->fresh())]);
+    }
+
+    private function ensureWithoutOrders(Cliente $cliente): void
+    {
+        if ($cliente->ordenesEmpresariales()->exists()) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['cliente' => 'No se puede eliminar un cliente con órdenes ERP.']);
+        }
     }
 
     private function filteredQuery(Request $request): Builder

@@ -56,6 +56,11 @@ class Cliente extends Model
         return $this->hasMany(Interaccion::class);
     }
 
+    public function ordenesEmpresariales(): HasMany
+    {
+        return $this->hasMany(OrdenEmpresarial::class);
+    }
+
     public function ultimaInteraccion(): HasOne
     {
         return $this->hasOne(Interaccion::class)->latestOfMany('fecha');
