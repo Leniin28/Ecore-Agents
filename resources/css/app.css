@@ -384,6 +384,17 @@ h1, h2, h3 { color: var(--blue-dark); }
 .erp-steps { margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; list-style: none; }
 .erp-steps li { flex: 1 1 100px; padding: 12px; color: var(--blue-dark); background: #edf4ff; border-radius: 10px; }
 .erp-steps .is-active { color: #fff; background: var(--blue); }
+.erp-level-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; color: var(--blue-dark); font-weight: 800; }
+.erp-level-heading strong { font-size: 1.3rem; }
+.erp-level-progress { display: block; width: 100%; height: 16px; overflow: hidden; appearance: none; border: 0; border-radius: 999px; background: #e9eef6; color: var(--blue); accent-color: var(--blue); }
+.erp-level-progress::-webkit-progress-bar { background: #e9eef6; border-radius: 999px; }
+.erp-level-progress::-webkit-progress-value { background: var(--blue); border-radius: 999px; }
+.erp-level-progress::-moz-progress-bar { background: var(--blue); border-radius: 999px; }
+.erp-level-caption { margin: 12px 0 20px; color: var(--muted); font-size: .85rem; line-height: 1.6; }
+.erp-level-steps li { display: flex; align-items: center; gap: 10px; border: 1px solid transparent; }
+.erp-level-steps li.is-complete { color: var(--blue-dark); background: #dceaff; border-color: #bcd5fa; }
+.erp-level-number { width: 28px; height: 28px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid currentColor; border-radius: 50%; font-weight: 800; }
+.erp-level-steps small { display: block; margin-top: 4px; font-size: .7rem; }
 .erp-order-form section h2 { font-size: 1.4rem; }
 .erp-checklist { margin: 16px 0; padding-left: 22px; display: grid; gap: 12px; line-height: 1.6; overflow-wrap: anywhere; }
 .erp-integration { display: grid; gap: 8px; text-align: center; }
@@ -448,6 +459,7 @@ h1, h2, h3 { color: var(--blue-dark); }
     .stage-form, .interaction-layout { grid-template-columns: 1fr; }
     .dashboard-panel-heading, .crm-bar-label { align-items: flex-start; flex-direction: column; }
     .reports-grid { grid-template-columns: 1fr; }
+    .erp-level-steps { display: grid; grid-template-columns: 1fr; }
 }
 
 @media (max-width: 460px) {

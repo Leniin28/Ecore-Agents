@@ -61,4 +61,28 @@ class ErpProcessesTest extends TestCase
         $this->putJson('/api/erp/estado', ['nivel' => 'optimizado'])->assertForbidden();
         $this->assertDatabaseCount('procesos_internos', 0);
     }
+
+    public function test_level_progress_is_cumulative_accessible_and_does_not_change_saved_data(): void
+    {
+        $this->actingAs($this->erpUser());
+        $estado = EstadoErp::actual();
+        foreach (array_keys(EstadoErp::NIVELES) as $index => $nivel) {
+            $estado->update(['nivel' => $nivel]);
+            $saved = $estado->fresh()->getAttributes();
+            $percentage = ($index + 1) * 25;
+            $step = $index + 1;
+            $label = EstadoErp::NIVELES[$nivel];
+            $response = $this->get('/erp/nivel')->assertOk()
+                ->assertSee('max="100" value="'.$percentage.'"', false)
+                ->assertSee('aria-labelledby="erp-level-progress-label"', false)
+                ->assertSee('aria-valuetext="'.$label.', nivel '.$step.' de 4, '.$percentage.'%"', false)
+                ->assertSee('Nivel '.$step.' de 4')
+                ->assertSee('Avance según el nivel declarado por el equipo.');
+
+            $this->assertSame($index, substr_count($response->getContent(), 'class="is-complete"'));
+            $this->assertSame(1, substr_count($response->getContent(), 'aria-current="step"'));
+            $this->assertSame($saved, $estado->fresh()->getAttributes());
+        }
+        $this->assertDatabaseCount('auditorias', 0);
+    }
 }

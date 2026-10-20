@@ -30,6 +30,58 @@ Los empleados necesitan permiso `erp`. Ventas sugiere CRM + ERP y Logística SCM
 
 API ERP con sesión Laravel y CSRF: `GET/POST /api/erp/ordenes`, `GET /api/erp/ordenes/{orden}`, `POST .../{orden}/procesar`, `POST .../{orden}/cancelar`, `GET /api/erp/metricas` y `GET/PUT /api/erp/estado`. Las ventas y unidades vendidas cuentan solo órdenes procesadas; el gráfico de seis meses usa la fecha de procesamiento. Las cantidades son unidades internas de capacidad IA, sin cobros ni llamadas externas.
 
+## Correspondencia con el PDF de Etapa 3
+
+Referencia académica: **Etapa 3 - ERP (Semanas 7-9)**, apartados 3.1 a 3.5. Las siguientes equivalencias documentan la adaptación a ECore Agents; no se agregan alias ni se duplican controladores o tablas para reproducir literalmente los nombres del ejemplo.
+
+### Rutas equivalentes
+
+Todas las rutas ERP requieren sesión y permiso `erp`. Las escrituras web y JSON conservan CSRF. La administración de roles y permisos sigue reservada al administrador.
+
+| Apartado | Ruta indicada en el PDF | Implementación ECore Agents | Motivo |
+|---|---|---|---|
+| 3.1 | `POST /ordenes` | Web: `POST /erp/ordenes`. JSON: `POST /api/erp/ordenes`. | Distingue las órdenes de clientes ERP de los pedidos de reposición SCM. |
+| 3.1 | `GET /ordenes` | Web: `GET /erp/ordenes`. JSON: `GET /api/erp/ordenes`. | Listado con sesión y permiso ERP. |
+| 3.1 | `GET /ordenes/{id}` | Web: `GET /erp/ordenes/{orden}`. JSON: `GET /api/erp/ordenes/{orden}`. | El parámetro usa el modelo existente de la orden. |
+| 3.1 | `PUT /ordenes/{id}/estado` | Web: `POST /erp/ordenes/{orden}/procesar` o `POST /erp/ordenes/{orden}/cancelar`. JSON: las mismas acciones bajo `/api/erp/ordenes/{orden}`. | Son acciones específicas, no un cambio libre de estado: procesar actualiza stock y cancelar solo admite pendientes. |
+| 3.2 | `POST /ordenes/procesar` | Web: `POST /erp/ordenes/{orden}/procesar`. JSON: `POST /api/erp/ordenes/{orden}/procesar`. | Identifica la orden a procesar y reutiliza la misma lógica transaccional SCM. |
+| 3.3 | `GET /erp/estado`, `PUT /erp/estado` | Se conservan ambas rutas. JSON: `GET /api/erp/estado`, `PUT /api/erp/estado`. Pantalla: `GET /erp/nivel`. | Separa la pantalla de nivel de la respuesta JSON y de su actualización. |
+| 3.4 | `GET /erp/metricas` | JSON: `GET /api/erp/metricas`. Pantallas: `GET /erp` y `GET /erp/reportes`. | Sigue el prefijo `/api` ya usado por CRM y SCM. |
+| 3.5 | `/auth/login` | `GET /login` y `POST /login`. | Reutiliza la autenticación Laravel existente. |
+| 3.5 | `/usuarios/rol` | Edición: `GET /admin/usuarios/{usuario}/edit`. Guardado: `PUT/PATCH /admin/usuarios/{usuario}`. | El mismo panel administra rol, perfil empresarial y permisos; no hay un segundo sistema de usuarios. |
+
+Las rutas web devuelven Blade o redirecciones; las rutas `/api/erp/*` devuelven JSON y usan la misma sesión. La creación deja la orden pendiente, sin modificar inventario. El descuento se ejecuta al procesar la orden, junto con movimientos, reposición PUSH, procesos y auditoría. El cliente se vincula al registro CRM existente.
+
+### Tablas y datos compartidos
+
+| Elemento del PDF | Implementación ECore Agents | Reutilización o adaptación |
+|---|---|---|
+| Clientes | `clientes` | Tabla CRM existente; la orden conserva `cliente_id`. |
+| Productos | `productos` | Recursos de capacidad IA del SCM; se añadió `precio_venta_unitario` separado del costo interno. |
+| Inventario | `productos.stock_actual`, `productos.stock_minimo` y `movimientos_inventario` | No hay una segunda tabla de inventario ERP. |
+| Pedidos | `pedidos` | Reposición SCM existente. No se confunde con órdenes de clientes ERP. |
+| Usuarios | `users` | Usuarios compartidos. Ventas y Logística son perfiles de empleados; `permissions` determina el acceso. |
+| Órdenes empresariales, nuevas | `ordenes_empresariales` y `orden_detalles` | Tablas nuevas con relaciones al cliente, usuario y producto existentes. Los detalles conservan precios históricos. |
+| Recursos, enumerados como nuevos | Vista `/erp/recursos` sobre `productos` y `proveedores` | Se cubre la función sin crear una tabla duplicada `recursos`. |
+| Procesos internos, nuevos | `procesos_internos` | Historial operativo por orden; distinto de la auditoría general. |
+| Reportes ERP, enumerados como nuevos | Consultas sobre órdenes, detalles, clientes y productos | Métricas y gráficas calculadas; no se crea una tabla `reportes_erp` ni se almacenan totales duplicados. |
+| EstadoERP del apartado 3.3 | `estado_erp` | Registro global del nivel declarado por el equipo. |
+
+Así se cumple el objetivo funcional de integrar información, con diferencias explícitas frente al esquema literal del PDF. La simulación comercial del apartado 3.5 utiliza los módulos y permisos propios; no requiere conectar SAP, Oracle, Odoo ni Dynamics.
+
+### Barra de progreso del nivel ERP
+
+La pantalla `/erp/nivel` muestra una barra acumulativa, el porcentaje y las cuatro etapas, distinguiendo etapas previas, nivel actual y etapas siguientes. La equivalencia visual es:
+
+| Nivel declarado | Posición | Barra |
+|---|---|---|
+| Básico | 1 de 4 | 25% |
+| Integrado | 2 de 4 | 50% |
+| Automatizado | 3 de 4 | 75% |
+| Optimizado | 4 de 4 | 100% |
+
+El porcentaje expresa la posición del **nivel declarado**, no el porcentaje de requisitos implementados ni una evaluación automática de la empresa. La barra no cambia niveles, permisos o datos por sí misma. Estos ajustes de presentación y documentación no requieren migraciones ni ejecutar seeders.
+
 ## API REST del CRM
 
 Los endpoints `GET`, `POST`, `PUT` y `DELETE` bajo `/api/clientes` consultan y persisten clientes mediante Eloquent. La respuesta de cada cliente incluye `etapa_crm` y la etapa puede actualizarse con `PUT /api/clientes/{cliente}/etapa`.
