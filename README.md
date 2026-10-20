@@ -32,6 +32,8 @@ API ERP con sesión Laravel y CSRF: `GET/POST /api/erp/ordenes`, `GET /api/erp/o
 
 ## Correspondencia con el PDF de Etapa 3
 
+Para trasladar la demo actual a otra computadora sin reemplazar SQLite ni sobrescribir registros, consulta [Transferencia privada y aditiva de la demo ERP](docs/transferencia-demo-erp.md). Incluye comandos de revisión/importación, respaldo automático, conflictos y equivalencias de folios.
+
 Referencia académica: **Etapa 3 - ERP (Semanas 7-9)**, apartados 3.1 a 3.5. Las siguientes equivalencias documentan la adaptación a ECore Agents; no se agregan alias ni se duplican controladores o tablas para reproducir literalmente los nombres del ejemplo.
 
 ### Rutas equivalentes
