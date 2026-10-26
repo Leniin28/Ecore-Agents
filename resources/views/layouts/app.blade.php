@@ -28,7 +28,7 @@
                     @if(auth()->user()->hasModuleAccess('scm'))
                         <a href="{{ route('scm.dashboard') }}" @if(request()->routeIs('scm.*')) aria-current="page" @endif>SCM</a>
                         @if(($cantidadStockBajo ?? 0) > 0)
-                            <a class="nav-stock-alert" href="{{ route('scm.inventario.index') }}">⚠ Stock bajo: {{ $cantidadStockBajo }}</a>
+                            <a class="nav-stock-alert" href="{{ \App\Support\ModuleNavigation::route('scm.inventario.index') }}">⚠ Stock bajo: {{ $cantidadStockBajo }}</a>
                         @endif
                     @endif
                     @if(auth()->user()->isAdmin())
@@ -83,7 +83,7 @@
                         @endforeach
                     </ul>
                     <div class="stock-alert-actions">
-                        <a class="button" href="{{ route('scm.inventario.index') }}">Ver inventario</a>
+                        <a class="button" href="{{ \App\Support\ModuleNavigation::route('scm.inventario.index') }}">Ver inventario</a>
                         <button class="back-button" type="button" data-stock-alert-close>Cerrar</button>
                     </div>
                 </section>

@@ -37,7 +37,7 @@ class ClienteController extends Controller
         ]);
         Auditoria::registrar($request->user(), 'crear', 'cliente', $cliente->id, "Creó al cliente {$cliente->nombre}.");
 
-        return redirect()->route('clientes.show', $cliente)
+        return redirect()->to(\App\Support\ModuleNavigation::route('clientes.show', $cliente))
             ->with('success', 'Cliente creado correctamente.');
     }
 
@@ -63,7 +63,7 @@ class ClienteController extends Controller
         $cliente->update($this->validateCliente($request, $cliente));
         Auditoria::registrar($request->user(), 'editar', 'cliente', $cliente->id, "Editó al cliente {$cliente->nombre}.");
 
-        return redirect()->route('clientes.show', $cliente)
+        return redirect()->to(\App\Support\ModuleNavigation::route('clientes.show', $cliente))
             ->with('success', 'Cliente actualizado correctamente.');
     }
 
@@ -74,7 +74,7 @@ class ClienteController extends Controller
         Auditoria::registrar($request->user(), 'eliminar', 'cliente', $cliente->id, "Eliminó al cliente {$cliente->nombre}.");
         $cliente->delete();
 
-        return redirect()->route('clientes.index')
+        return redirect()->to(\App\Support\ModuleNavigation::route('clientes.index'))
             ->with('success', 'Cliente eliminado correctamente.');
     }
 
@@ -83,7 +83,7 @@ class ClienteController extends Controller
         $cliente->update($this->validateEtapa($request));
         Auditoria::registrar($request->user(), 'cambiar_etapa', 'cliente', $cliente->id, "Cambió la etapa CRM de {$cliente->nombre} a {$cliente->etapa_crm}.");
 
-        return redirect()->route('clientes.show', $cliente)
+        return redirect()->to(\App\Support\ModuleNavigation::route('clientes.show', $cliente))
             ->with('success', 'Etapa CRM actualizada correctamente.');
     }
 

@@ -31,7 +31,7 @@ class MovimientoInventarioController extends Controller
     {
         $movimiento = $this->registrar($request, $this->validated($request));
 
-        return redirect()->route('scm.movimientos.index')
+        return redirect()->to(\App\Support\ModuleNavigation::route('scm.movimientos.index'))
             ->with('success', "Movimiento {$movimiento->tipo} registrado correctamente.");
     }
 

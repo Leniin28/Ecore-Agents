@@ -48,6 +48,26 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::prefix('erp')->name('erp.')->middleware('module:erp')->group(function () {
+        // Mismas operaciones y tablas, presentadas dentro del área ERP.
+        Route::middleware('module:crm')->group(function () {
+            Route::resource('clientes', ClienteController::class);
+            Route::put('/clientes/{cliente}/etapa', [ClienteController::class, 'updateEtapa'])->name('clientes.etapa.update');
+            Route::get('/clientes/{cliente}/interacciones', [InteraccionController::class, 'index'])->name('clientes.interacciones.index');
+            Route::post('/interacciones', [InteraccionController::class, 'store'])->name('interacciones.store');
+        });
+        Route::middleware('module:scm')->group(function () {
+            Route::resource('productos', ProductoController::class)->except('show');
+            Route::get('/inventario', [InventarioController::class, 'index'])->name('inventario.index');
+            Route::get('/movimientos', [MovimientoInventarioController::class, 'index'])->name('movimientos.index');
+            Route::get('/movimientos/create', [MovimientoInventarioController::class, 'create'])->name('movimientos.create');
+            Route::post('/movimientos', [MovimientoInventarioController::class, 'store'])->name('movimientos.store');
+            Route::get('/productos/{producto}/movimientos', [MovimientoInventarioController::class, 'porProducto'])->name('productos.movimientos');
+        });
+        Route::middleware('admin')->group(function () {
+            Route::resource('usuarios', AdminUserController::class)->except('show');
+            Route::get('/usuarios/{usuario}/password', [AdminUserController::class, 'editPassword'])->name('usuarios.password.edit');
+            Route::put('/usuarios/{usuario}/password', [AdminUserController::class, 'updatePassword'])->name('usuarios.password.update');
+        });
         Route::get('/recursos', [\App\Http\Controllers\Erp\RecursoController::class, 'index'])->name('recursos');
         Route::get('/', [\App\Http\Controllers\Erp\DashboardController::class, 'index'])->name('dashboard');
         Route::resource('ordenes', \App\Http\Controllers\Erp\OrdenController::class)->only(['index', 'create', 'store', 'show'])->parameters(['ordenes' => 'orden']);

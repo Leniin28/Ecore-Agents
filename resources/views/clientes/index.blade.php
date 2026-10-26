@@ -1,10 +1,12 @@
-@extends('layouts.app')
+@extends($erpContext ? 'erp.layout' : 'layouts.app')
+@section('erp-title', 'Clientes')
 
-@section('title', 'Clientes | ECore Agents')
+@section('title', $erpContext ? 'Clientes | ERP | ECore Agents' : 'Clientes | ECore Agents')
 @section('body-class', 'admin-page')
 
-@section('content')
-    <section class="admin-hero">
+@section($erpContext ? 'erp-content' : 'content')
+    @unless($erpContext)
+<section class="admin-hero">
         <span class="section-eyebrow">CRM inicial</span>
         <h1>Clientes</h1>
         <p>Centraliza la información básica de cada cliente y mantenla disponible para el equipo.</p>
@@ -14,22 +16,23 @@
         @include('admin._sidebar')
 
         <div class="admin-content customer-content">
-            @if(session('success'))
+@endunless
+            @if(session('success') && ! $erpContext)
                 <p class="success-alert" role="status">{{ session('success') }}</p>
             @endif
 
             <div class="customer-heading">
                 <div><span class="section-eyebrow">Directorio</span><h2>Listado de clientes</h2></div>
-                <a class="button" href="{{ route('clientes.create') }}">Nuevo cliente</a>
+                <a class="button" href="{{ $moduleRoute('clientes.create') }}">Nuevo cliente</a>
             </div>
 
-            <form class="customer-filters" method="get" action="{{ route('clientes.index') }}">
+            <form class="customer-filters" method="get" action="{{ $moduleRoute('clientes.index') }}">
                 <div><label for="buscar">Buscar</label><input id="buscar" name="buscar" type="search" value="{{ $buscar }}" placeholder="Nombre, correo o empresa"></div>
                 <div><label for="estado">Estado</label><select id="estado" name="estado"><option value="">Todos</option><option value="activo" @selected($estado === 'activo')>Activo</option><option value="inactivo" @selected($estado === 'inactivo')>Inactivo</option></select></div>
                 <div><label for="etapa_crm">Etapa CRM</label><select id="etapa_crm" name="etapa_crm"><option value="">Todas</option>@foreach(\App\Models\Cliente::etapasCrm() as $value => $label)<option value="{{ $value }}" @selected($etapaCrm === $value)>{{ $label }}</option>@endforeach</select></div>
                 <button class="button" type="submit">Aplicar filtros</button>
                 @if($buscar || $estado || $etapaCrm)
-                    <a class="back-button" href="{{ route('clientes.index') }}">Limpiar</a>
+                    <a class="back-button" href="{{ $moduleRoute('clientes.index') }}">Limpiar</a>
                 @endif
             </form>
 
@@ -50,10 +53,10 @@
                                     <td><span class="status-badge status-{{ $cliente->estado }}">{{ ucfirst($cliente->estado) }}</span></td>
                                     <td><span class="stage-badge stage-{{ $cliente->etapa_crm }}">{{ $cliente->etapaCrmLabel() }}</span></td>
                                     <td class="table-actions">
-                                        <a href="{{ route('clientes.show', $cliente) }}">Ver</a>
-                                        <a href="{{ route('clientes.edit', $cliente) }}">Editar</a>
+                                        <a href="{{ $moduleRoute('clientes.show', $cliente) }}">Ver</a>
+                                        <a href="{{ $moduleRoute('clientes.edit', $cliente) }}">Editar</a>
                                         @if(auth()->user()->isAdmin())
-                                            <form method="post" action="{{ route('clientes.destroy', $cliente) }}" data-confirm-delete="¿Eliminar a {{ $cliente->nombre }}?">
+                                            <form method="post" action="{{ $moduleRoute('clientes.destroy', $cliente) }}" data-confirm-delete="¿Eliminar a {{ $cliente->nombre }}?">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit">Eliminar</button>
@@ -66,6 +69,9 @@
                     </table>
                 </div>
             @endif
+    @unless($erpContext)
+
         </div>
     </section>
+@endunless
 @endsection

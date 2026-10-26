@@ -23,6 +23,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        View::composer(['clientes.*', 'scm.productos.*', 'scm.inventario.*', 'scm.movimientos.*', 'admin.usuarios.*'], function (BladeView $view): void {
+            $view->with('erpContext', request()->routeIs('erp.*'))
+                ->with('moduleRoute', \App\Support\ModuleNavigation::route(...));
+        });
+
         View::composer('layouts.app', function (BladeView $view): void {
             $request = request();
             $user = $request->user();

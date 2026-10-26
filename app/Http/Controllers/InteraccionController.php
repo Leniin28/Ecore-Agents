@@ -33,7 +33,7 @@ class InteraccionController extends Controller
         ]);
         Auditoria::registrar($request->user(), 'crear', 'interaccion', $interaccion->id, "Registró una interacción {$interaccion->tipo} con {$cliente->nombre}.");
 
-        return redirect()->route('clientes.show', $cliente)
+        return redirect()->to(\App\Support\ModuleNavigation::route('clientes.show', $cliente))
             ->with('success', 'Interacción registrada correctamente.');
     }
 

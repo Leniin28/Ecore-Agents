@@ -28,5 +28,5 @@
 
 <div class="form-actions">
     <button class="button" type="submit">{{ $submitLabel }}</button>
-    <a class="back-button" href="{{ $cliente ? route('clientes.show', $cliente) : route('clientes.index') }}">Cancelar</a>
+    <a class="back-button" href="{{ $cliente ? $moduleRoute('clientes.show', $cliente) : $moduleRoute('clientes.index') }}">Cancelar</a>
 </div>

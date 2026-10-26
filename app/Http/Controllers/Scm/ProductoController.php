@@ -35,7 +35,7 @@ class ProductoController extends Controller
         $producto = Producto::create($this->validated($request));
         Auditoria::registrar($request->user(), 'crear', 'producto', $producto->id, "Creó el recurso IA {$producto->nombre}.");
 
-        return redirect()->route('scm.productos.index')->with('success', 'Producto/recurso IA creado correctamente.');
+        return redirect()->to(\App\Support\ModuleNavigation::route('scm.productos.index'))->with('success', 'Producto/recurso IA creado correctamente.');
     }
 
     public function edit(Producto $producto): View
@@ -51,7 +51,7 @@ class ProductoController extends Controller
         $producto->update($this->validated($request));
         Auditoria::registrar($request->user(), 'editar', 'producto', $producto->id, "Editó el recurso IA {$producto->nombre}.");
 
-        return redirect()->route('scm.productos.index')->with('success', 'Producto/recurso IA actualizado correctamente.');
+        return redirect()->to(\App\Support\ModuleNavigation::route('scm.productos.index'))->with('success', 'Producto/recurso IA actualizado correctamente.');
     }
 
     public function destroy(Request $request, Producto $producto): RedirectResponse
@@ -60,7 +60,7 @@ class ProductoController extends Controller
         Auditoria::registrar($request->user(), 'eliminar', 'producto', $producto->id, "Eliminó el recurso IA {$producto->nombre}.");
         $producto->delete();
 
-        return redirect()->route('scm.productos.index')->with('success', 'Producto/recurso IA eliminado correctamente.');
+        return redirect()->to(\App\Support\ModuleNavigation::route('scm.productos.index'))->with('success', 'Producto/recurso IA eliminado correctamente.');
     }
 
     public function apiIndex(Request $request): JsonResponse

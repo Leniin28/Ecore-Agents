@@ -54,7 +54,7 @@ class UserController extends Controller
             return $usuario;
         });
 
-        return redirect()->route('admin.usuarios.index')
+        return redirect()->to(\App\Support\ModuleNavigation::route('admin.usuarios.index'))
             ->with('success', "Usuario {$usuario->name} creado correctamente.");
     }
 
@@ -110,7 +110,7 @@ class UserController extends Controller
             }
         });
 
-        return redirect()->route('admin.usuarios.index')
+        return redirect()->to(\App\Support\ModuleNavigation::route('admin.usuarios.index'))
             ->with('success', 'Usuario actualizado correctamente.');
     }
 
@@ -131,7 +131,7 @@ class UserController extends Controller
                 "Restableció la contraseña del usuario {$usuario->name}.");
         });
 
-        return redirect()->route('admin.usuarios.index')
+        return redirect()->to(\App\Support\ModuleNavigation::route('admin.usuarios.index'))
             ->with('success', 'Contraseña restablecida correctamente.');
     }
 
@@ -141,7 +141,7 @@ class UserController extends Controller
 
         $error = $this->checkDeletionConstraints($usuario, $currentUser);
         if ($error !== null) {
-            return redirect()->route('admin.usuarios.index')->with('error', $error);
+            return redirect()->to(\App\Support\ModuleNavigation::route('admin.usuarios.index'))->with('error', $error);
         }
 
         try {
@@ -177,10 +177,10 @@ class UserController extends Controller
                 $target->delete();
             });
         } catch (\RuntimeException $e) {
-            return redirect()->route('admin.usuarios.index')->with('error', $e->getMessage());
+            return redirect()->to(\App\Support\ModuleNavigation::route('admin.usuarios.index'))->with('error', $e->getMessage());
         }
 
-        return redirect()->route('admin.usuarios.index')
+        return redirect()->to(\App\Support\ModuleNavigation::route('admin.usuarios.index'))
             ->with('success', "Usuario {$usuario->name} eliminado correctamente.");
     }
 

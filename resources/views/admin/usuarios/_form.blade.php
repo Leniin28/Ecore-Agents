@@ -50,7 +50,7 @@
 
 <div class="form-actions">
     <button class="button" type="submit">{{ isset($usuario) ? 'Guardar cambios' : 'Crear usuario' }}</button>
-    <a class="back-button" href="{{ route('admin.usuarios.index') }}">Cancelar</a>
+    <a class="back-button" href="{{ $moduleRoute('admin.usuarios.index') }}">Cancelar</a>
 </div>
 
 @push('scripts')

@@ -1,14 +1,17 @@
-@extends('layouts.app')
+@extends($erpContext ? 'erp.layout' : 'layouts.app')
+@section('erp-title', 'Ficha de cliente')
 
-@section('title', $cliente->nombre.' | ECore Agents')
+@section('title', $erpContext ? 'Ficha de cliente | ERP | ECore Agents' : $cliente->nombre.' | ECore Agents')
 @section('body-class', 'admin-page')
 
-@section('content')
-    <section class="admin-hero"><span class="section-eyebrow">Ficha de cliente</span><h1>{{ $cliente->nombre }}</h1><p>Información centralizada del cliente.</p></section>
+@section($erpContext ? 'erp-content' : 'content')
+    @unless($erpContext)
+<section class="admin-hero"><span class="section-eyebrow">Ficha de cliente</span><h1>{{ $cliente->nombre }}</h1><p>Información centralizada del cliente.</p></section>
     <section class="admin-layout">
         @include('admin._sidebar')
         <div class="admin-content customer-content">
-            @if(session('success'))
+@endunless
+            @if(session('success') && ! $erpContext)
                 <p class="success-alert" role="status">{{ session('success') }}</p>
             @endif
             <article class="customer-detail">
@@ -25,12 +28,12 @@
                     <div><dt>Estado</dt><dd>{{ ucfirst($cliente->estado) }}</dd></div>
                     <div><dt>Etapa CRM</dt><dd>{{ $cliente->etapaCrmLabel() }}</dd></div>
                 </dl>
-                <div class="form-actions"><a class="button" href="{{ route('clientes.edit', $cliente) }}">Editar cliente</a><a class="back-button" href="{{ route('clientes.index') }}">Volver al listado</a></div>
+                <div class="form-actions"><a class="button" href="{{ $moduleRoute('clientes.edit', $cliente) }}">Editar cliente</a><a class="back-button" href="{{ $moduleRoute('clientes.index') }}">Volver al listado</a></div>
             </article>
 
             <article class="stage-panel">
                 <div><span class="section-eyebrow">Seguimiento</span><h2>Etapa CRM</h2><p>Clasifica la relación actual con este cliente.</p></div>
-                <form class="stage-form" method="post" action="{{ route('clientes.etapa.update', $cliente) }}">
+                <form class="stage-form" method="post" action="{{ $moduleRoute('clientes.etapa.update', $cliente) }}">
                     @csrf
                     @method('PUT')
                     <label for="etapa_crm">Etapa actual</label>
@@ -48,7 +51,7 @@
                 <article class="interaction-form-card">
                     <span class="section-eyebrow">Seguimiento</span>
                     <h2>Registrar interacción</h2>
-                    <form class="customer-form" method="post" action="{{ route('interacciones.store') }}">
+                    <form class="customer-form" method="post" action="{{ $moduleRoute('interacciones.store') }}">
                         @csrf
                         <input name="cliente_id" type="hidden" value="{{ $cliente->id }}">
                         <label for="tipo">Tipo</label>
@@ -91,6 +94,9 @@
                     @endif
                 </article>
             </section>
+    @unless($erpContext)
+
         </div>
     </section>
+@endunless
 @endsection

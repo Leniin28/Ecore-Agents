@@ -12,4 +12,4 @@
 @error('precio_venta_unitario') <p class="form-error">{{ $message }}</p> @enderror
 <label>Estrategia logística<select name="estrategia_logistica" required><option value="PUSH" @selected(old('estrategia_logistica', $producto->estrategia_logistica ?? 'PULL') === 'PUSH')>PUSH</option><option value="PULL" @selected(old('estrategia_logistica', $producto->estrategia_logistica ?? 'PULL') === 'PULL')>PULL</option></select></label>
 @error('estrategia_logistica') <p class="form-error">{{ $message }}</p> @enderror
-<button class="button" type="submit">Guardar recurso IA</button>
+<div class="form-actions"><button class="button" type="submit">Guardar recurso IA</button><a class="back-button" href="{{ $moduleRoute('scm.productos.index') }}">Cancelar</a></div>

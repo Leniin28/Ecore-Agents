@@ -32,11 +32,11 @@ class ErpMenuAndUserDeletionTest extends TestCase
         // Check direct access links
         $response->assertSee(route('erp.dashboard'));
         $response->assertSee('Inicio');
-        $response->assertSee(route('clientes.index'));
+        $response->assertSee(route('erp.clientes.index'));
         $response->assertSee('Clientes');
-        $response->assertSee(route('scm.productos.index'));
+        $response->assertSee(route('erp.productos.index'));
         $response->assertSee('Productos');
-        $response->assertSee(route('scm.inventario.index'));
+        $response->assertSee(route('erp.inventario.index'));
         $response->assertSee('Inventario');
         $response->assertSee(route('erp.ordenes.index'));
         $response->assertSee('Órdenes');
@@ -48,7 +48,7 @@ class ErpMenuAndUserDeletionTest extends TestCase
         $response->assertSee('Reportes');
         $response->assertSee(route('erp.nivel'));
         $response->assertSee('Nivel ERP');
-        $response->assertSee(route('admin.usuarios.index'));
+        $response->assertSee(route('erp.usuarios.index'));
         $response->assertSee('Usuarios');
 
         // Verify active state and aria-current="page" on Inicio
@@ -72,10 +72,10 @@ class ErpMenuAndUserDeletionTest extends TestCase
 
         $responseCrm = $this->actingAs($employeeCrm)->get(route('erp.dashboard'));
         $responseCrm->assertOk();
-        $responseCrm->assertSee(route('clientes.index'));
-        $responseCrm->assertDontSee(route('scm.productos.index'));
-        $responseCrm->assertDontSee(route('scm.inventario.index'));
-        $responseCrm->assertDontSee(route('admin.usuarios.index'));
+        $responseCrm->assertSee(route('erp.clientes.index'));
+        $responseCrm->assertDontSee(route('erp.productos.index'));
+        $responseCrm->assertDontSee(route('erp.inventario.index'));
+        $responseCrm->assertDontSee(route('erp.usuarios.index'));
 
         // Empleado con ERP y SCM
         $employeeScm = User::factory()->create([
@@ -85,10 +85,10 @@ class ErpMenuAndUserDeletionTest extends TestCase
 
         $responseScm = $this->actingAs($employeeScm)->get(route('erp.dashboard'));
         $responseScm->assertOk();
-        $responseScm->assertDontSee(route('clientes.index'));
-        $responseScm->assertSee(route('scm.productos.index'));
-        $responseScm->assertSee(route('scm.inventario.index'));
-        $responseScm->assertDontSee(route('admin.usuarios.index'));
+        $responseScm->assertDontSee(route('erp.clientes.index'));
+        $responseScm->assertSee(route('erp.productos.index'));
+        $responseScm->assertSee(route('erp.inventario.index'));
+        $responseScm->assertDontSee(route('erp.usuarios.index'));
 
         // Empleado solo con ERP
         $employeeErpOnly = User::factory()->create([
@@ -98,10 +98,10 @@ class ErpMenuAndUserDeletionTest extends TestCase
 
         $responseErp = $this->actingAs($employeeErpOnly)->get(route('erp.dashboard'));
         $responseErp->assertOk();
-        $responseErp->assertDontSee(route('clientes.index'));
-        $responseErp->assertDontSee(route('scm.productos.index'));
-        $responseErp->assertDontSee(route('scm.inventario.index'));
-        $responseErp->assertDontSee(route('admin.usuarios.index'));
+        $responseErp->assertDontSee(route('erp.clientes.index'));
+        $responseErp->assertDontSee(route('erp.productos.index'));
+        $responseErp->assertDontSee(route('erp.inventario.index'));
+        $responseErp->assertDontSee(route('erp.usuarios.index'));
     }
 
     public function test_business_profile_does_not_automatically_grant_module_access_without_permissions(): void
@@ -115,8 +115,8 @@ class ErpMenuAndUserDeletionTest extends TestCase
 
         $response = $this->actingAs($employeeVentas)->get(route('erp.dashboard'));
         $response->assertOk();
-        $response->assertDontSee(route('clientes.index'));
-        $response->assertDontSee(route('scm.productos.index'));
+        $response->assertDontSee(route('erp.clientes.index'));
+        $response->assertDontSee(route('erp.productos.index'));
 
         // Perfil logistica pero solo con permiso erp (no se le dio scm)
         $employeeLogistica = User::factory()->create([
@@ -127,8 +127,8 @@ class ErpMenuAndUserDeletionTest extends TestCase
 
         $response2 = $this->actingAs($employeeLogistica)->get(route('erp.dashboard'));
         $response2->assertOk();
-        $response2->assertDontSee(route('scm.productos.index'));
-        $response2->assertDontSee(route('scm.inventario.index'));
+        $response2->assertDontSee(route('erp.productos.index'));
+        $response2->assertDontSee(route('erp.inventario.index'));
     }
 
     public function test_user_administration_access_rejected_for_guest_employee_and_client(): void
