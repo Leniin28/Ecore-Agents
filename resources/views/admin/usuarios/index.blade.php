@@ -28,7 +28,7 @@
                         @unless($usuario->isClient()) <a href="{{ route('admin.usuarios.edit', $usuario) }}">Editar</a> @endunless
                         <a href="{{ route('admin.usuarios.password.edit', $usuario) }}">Restablecer contraseña</a>
                         @if(!$usuario->isClient() && !$usuario->cliente && $usuario->id !== auth()->id())
-                            <form method="post" action="{{ route('admin.usuarios.destroy', $usuario) }}" onsubmit="return confirm('¿Confirmas la eliminación del usuario {{ $usuario->name }} ({{ $usuario->email }})? Esta acción no se puede deshacer.');">
+                            <form method="post" action="{{ route('admin.usuarios.destroy', $usuario) }}" data-confirm-delete="¿Confirmas la eliminación del usuario {{ $usuario->name }} ({{ $usuario->email }})? Esta acción no se puede deshacer.">
                                 @csrf
                                 @method('delete')
                                 <button type="submit" aria-label="Eliminar usuario {{ $usuario->name }}">Eliminar</button>

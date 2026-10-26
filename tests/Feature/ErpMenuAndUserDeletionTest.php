@@ -448,11 +448,41 @@ class ErpMenuAndUserDeletionTest extends TestCase
         $this->assertStringContainsString('action="'.route('admin.usuarios.destroy', $employee).'"', $content);
         $this->assertStringContainsString('name="_method" value="delete"', $content);
         $this->assertStringContainsString('name="_token"', $content);
-        $this->assertStringContainsString('¿Confirmas la eliminación del usuario Empleado Target UI', $content);
+        $this->assertStringContainsString('data-confirm-delete="¿Confirmas la eliminación del usuario Empleado Target UI', $content);
+        $this->assertStringNotContainsString('onsubmit=', $content);
         $this->assertStringContainsString('aria-label="Eliminar usuario Empleado Target UI"', $content);
 
         // No debe ofrecer formulario de eliminación para el usuario logueado ni para clientes
         $this->assertStringNotContainsString('action="'.route('admin.usuarios.destroy', $admin).'"', $content);
         $this->assertStringNotContainsString('action="'.route('admin.usuarios.destroy', $client).'"', $content);
+    }
+
+    public function test_delete_form_handles_user_names_with_apostrophes_and_quotes_safely_in_data_confirm_delete(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $complexName = 'D\'Angelo "The Architect" O\'Neil';
+        $employee = User::factory()->create([
+            'name' => $complexName,
+            'email' => 'complex.name@example.com',
+            'role' => User::ROLE_EMPLEADO,
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.usuarios.index'));
+        $response->assertOk();
+
+        $content = $response->getContent();
+
+        // data-confirm-delete debe estar presente y correctamente escapado sin usar onsubmit
+        $expectedEscapedName = htmlspecialchars($complexName, ENT_QUOTES, 'UTF-8');
+        $this->assertStringContainsString('data-confirm-delete="¿Confirmas la eliminación del usuario '.$expectedEscapedName.' (complex.name@example.com)? Esta acción no se puede deshacer."', $content);
+        $this->assertStringNotContainsString('onsubmit=', $content);
+
+        // La eliminación se procesa correctamente en backend y registra el nombre original en auditoría
+        $deleteResponse = $this->actingAs($admin)->delete(route('admin.usuarios.destroy', $employee));
+        $deleteResponse->assertRedirect(route('admin.usuarios.index'));
+        $this->assertDatabaseMissing('users', ['id' => $employee->id]);
+
+        $audit = Auditoria::query()->where('accion', 'eliminar')->where('entidad_id', $employee->id)->firstOrFail();
+        $this->assertStringContainsString($complexName, $audit->descripcion);
     }
 }
