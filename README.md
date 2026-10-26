@@ -30,6 +30,10 @@ Los empleados necesitan permiso `erp`. Ventas sugiere CRM + ERP y Logística SCM
 
 API ERP con sesión Laravel y CSRF: `GET/POST /api/erp/ordenes`, `GET /api/erp/ordenes/{orden}`, `POST .../{orden}/procesar`, `POST .../{orden}/cancelar`, `GET /api/erp/metricas` y `GET/PUT /api/erp/estado`. Las ventas y unidades vendidas cuentan solo órdenes procesadas; el gráfico de seis meses usa la fecha de procesamiento. Las cantidades son unidades internas de capacidad IA, sin cobros ni llamadas externas.
 
+## Navegación integrada desde ERP
+
+Al entrar desde el menú ERP, Clientes, Productos, Inventario y Usuarios conservan el área ERP mediante `/erp/clientes`, `/erp/productos`, `/erp/inventario` y `/erp/usuarios`. Los formularios, filtros, historial y redirecciones mantienen ese contexto. Se reutilizan los controladores, vistas y tablas existentes, sin migraciones ni datos duplicados. Las rutas nativas CRM/SCM/administración mantienen su presentación original. Las rutas compartidas dentro de ERP requieren tanto permiso ERP como el del módulo original; Usuarios sigue siendo exclusivo de administradores.
+
 ## Correspondencia con el PDF de Etapa 3
 
 Para trasladar la demo actual a otra computadora sin reemplazar SQLite ni sobrescribir registros, consulta [Transferencia privada y aditiva de la demo ERP](docs/transferencia-demo-erp.md). Incluye comandos de revisión/importación, respaldo automático, conflictos y equivalencias de folios.
