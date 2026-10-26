@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
@@ -132,6 +133,96 @@ class UserController extends Controller
 
         return redirect()->route('admin.usuarios.index')
             ->with('success', 'Contraseña restablecida correctamente.');
+    }
+
+    public function destroy(Request $request, User $usuario): RedirectResponse
+    {
+        $currentUser = $request->user();
+
+        $error = $this->checkDeletionConstraints($usuario, $currentUser);
+        if ($error !== null) {
+            return redirect()->route('admin.usuarios.index')->with('error', $error);
+        }
+
+        try {
+            DB::transaction(function () use ($usuario, $currentUser): void {
+                $target = User::query()->lockForUpdate()->findOrFail($usuario->id);
+
+                $lockedError = $this->checkDeletionConstraints($target, $currentUser);
+                if ($lockedError !== null) {
+                    throw new \RuntimeException($lockedError);
+                }
+
+                $deletedName = $target->name;
+                $deletedEmail = $target->email;
+                $deletedRole = $target->roleLabel();
+                $deletedId = $target->id;
+
+                Auditoria::registrar(
+                    $currentUser,
+                    'eliminar',
+                    'usuario',
+                    $deletedId,
+                    "Eliminó al {$deletedRole} {$deletedName} ({$deletedEmail})."
+                );
+
+                if (Schema::hasTable('sessions')) {
+                    DB::table('sessions')->where('user_id', $deletedId)->delete();
+                }
+
+                if (Schema::hasTable('password_reset_tokens')) {
+                    DB::table('password_reset_tokens')->where('email', $deletedEmail)->delete();
+                }
+
+                $target->delete();
+            });
+        } catch (\RuntimeException $e) {
+            return redirect()->route('admin.usuarios.index')->with('error', $e->getMessage());
+        }
+
+        return redirect()->route('admin.usuarios.index')
+            ->with('success', "Usuario {$usuario->name} eliminado correctamente.");
+    }
+
+    private function checkDeletionConstraints(User $target, User $current): ?string
+    {
+        if ($target->id === $current->id) {
+            return 'No puedes eliminar tu propia cuenta de usuario.';
+        }
+
+        if ($target->isClient() || $target->cliente()->exists()) {
+            return 'No se pueden eliminar cuentas de clientes ni usuarios vinculados a un cliente.';
+        }
+
+        if ($target->isAdmin() && User::query()->where('role', User::ROLE_ADMIN)->count() <= 1) {
+            return 'No se puede eliminar al último administrador del sistema.';
+        }
+
+        if ($target->interacciones()->exists()) {
+            return 'No se puede eliminar el usuario porque tiene interacciones registradas en el historial.';
+        }
+
+        if ($target->ordenesEmpresariales()->exists()) {
+            return 'No se puede eliminar el usuario porque tiene órdenes empresariales registradas en el historial.';
+        }
+
+        if ($target->movimientosInventario()->exists()) {
+            return 'No se puede eliminar el usuario porque tiene movimientos de inventario registrados en el historial.';
+        }
+
+        if ($target->pedidos()->exists()) {
+            return 'No se puede eliminar el usuario porque tiene pedidos registrados en el historial.';
+        }
+
+        if ($target->procesosInternos()->exists()) {
+            return 'No se puede eliminar el usuario porque tiene procesos internos registrados en el historial.';
+        }
+
+        if ($target->auditorias()->exists()) {
+            return 'No se puede eliminar el usuario porque tiene registros de auditoría como usuario actor en el historial.';
+        }
+
+        return null;
     }
 
     /** @return array<string, mixed> */

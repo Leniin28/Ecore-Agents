@@ -48,7 +48,10 @@
 @error('permissions') <p class="form-error">{{ $message }}</p> @enderror
 @error('permissions.*') <p class="form-error">{{ $message }}</p> @enderror
 
-<button class="button" type="submit">{{ isset($usuario) ? 'Guardar cambios' : 'Crear usuario' }}</button>
+<div class="form-actions">
+    <button class="button" type="submit">{{ isset($usuario) ? 'Guardar cambios' : 'Crear usuario' }}</button>
+    <a class="back-button" href="{{ route('admin.usuarios.index') }}">Cancelar</a>
+</div>
 
 @push('scripts')
 <script>

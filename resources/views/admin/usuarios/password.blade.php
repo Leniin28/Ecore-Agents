@@ -8,7 +8,10 @@
         <label>Nueva contraseña<input type="password" name="password" required minlength="8"></label>
         <label>Confirmación<input type="password" name="password_confirmation" required minlength="8"></label>
         @error('password') <p class="form-error">{{ $message }}</p> @enderror
-        <button class="button" type="submit">Restablecer contraseña</button>
+        <div class="form-actions">
+            <button class="button" type="submit">Restablecer contraseña</button>
+            <a class="back-button" href="{{ route('admin.usuarios.index') }}">Cancelar</a>
+        </div>
     </form>
 </section>
 @endsection

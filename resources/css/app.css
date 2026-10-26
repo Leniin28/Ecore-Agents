@@ -278,6 +278,7 @@ h1, h2, h3 { color: var(--blue-dark); }
 .table-actions button { color: #b42318; }
 .table-actions form { margin: 0; }
 .success-alert { margin: 0; padding: 14px 16px; color: #126b45; background: #ecfdf3; border: 1px solid #abefc6; border-radius: 10px; font-weight: 800; }
+.error-alert { margin: 0; padding: 14px 16px; color: #b42318; background: #fef3f2; border: 1px solid #fee4e2; border-radius: 10px; font-weight: 800; }
 .customer-form { max-width: 700px; display: grid; gap: 10px; }
 .customer-form label small { color: var(--muted); font-weight: 600; }
 .form-actions { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 12px; }

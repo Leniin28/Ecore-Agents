@@ -83,6 +83,26 @@ class User extends Authenticatable
         return $this->hasMany(OrdenEmpresarial::class, 'usuario_id');
     }
 
+    public function movimientosInventario(): HasMany
+    {
+        return $this->hasMany(MovimientoInventario::class, 'usuario_id');
+    }
+
+    public function pedidos(): HasMany
+    {
+        return $this->hasMany(Pedido::class, 'usuario_id');
+    }
+
+    public function procesosInternos(): HasMany
+    {
+        return $this->hasMany(ProcesoInterno::class, 'usuario_id');
+    }
+
+    public function auditorias(): HasMany
+    {
+        return $this->hasMany(Auditoria::class, 'usuario_id');
+    }
+
     /**
      * Get the attributes that should be cast.
      *

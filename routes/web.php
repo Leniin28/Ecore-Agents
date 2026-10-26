@@ -96,7 +96,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('admin')->name('admin.')->middleware('admin')->group(function () {
-        Route::resource('usuarios', AdminUserController::class)->except(['show', 'destroy']);
+        Route::resource('usuarios', AdminUserController::class)->except(['show']);
         Route::get('/usuarios/{usuario}/password', [AdminUserController::class, 'editPassword'])->name('usuarios.password.edit');
         Route::put('/usuarios/{usuario}/password', [AdminUserController::class, 'updatePassword'])->name('usuarios.password.update');
         Route::get('/auditoria', [AuditoriaController::class, 'index'])->name('auditoria.index');
