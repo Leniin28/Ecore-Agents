@@ -37,7 +37,10 @@ class TiendaCheckoutService
         string $metodoPago,
         ?string $codigoPromocion = null,
         ?string $idempotencyKey = null,
-        bool $simularRechazo = false
+        bool $simularRechazo = false,
+        ?int $versionEsperada = null,
+        ?int $totalEsperadoCentavos = null,
+        ?string $cotizacionHashEsperado = null
     ): array {
         if (! array_key_exists($metodoPago, Pago::METODOS)) {
             throw ValidationException::withMessages(['metodo' => 'El método de pago seleccionado no es válido.']);
@@ -60,12 +63,30 @@ class TiendaCheckoutService
             }
         }
 
-        return DB::transaction(function () use ($usuario, $cliente, $datosEntrega, $metodoPago, $codigoPromocion, $idempotencyKey, $simularRechazo) {
+        return DB::transaction(function () use (
+            $usuario,
+            $cliente,
+            $datosEntrega,
+            $metodoPago,
+            $codigoPromocion,
+            $idempotencyKey,
+            $simularRechazo,
+            $versionEsperada,
+            $totalEsperadoCentavos,
+            $cotizacionHashEsperado
+        ) {
             $carrito = $this->carritoService->obtenerCarrito($usuario);
             $detalles = $carrito->detalles()->with('producto')->get();
 
             if ($detalles->isEmpty()) {
                 throw ValidationException::withMessages(['carrito' => 'Tu carrito de compras está vacío. Agrega planes o complementos antes de pagar.']);
+            }
+
+            // Validación de versión del carrito: si el carrito cambió, exigir confirmación del resumen actualizado
+            if ($versionEsperada !== null && (int) $carrito->version !== (int) $versionEsperada) {
+                throw ValidationException::withMessages([
+                    'cotizacion' => 'Tu carrito cambió mientras revisabas el pedido. Hemos actualizado tu resumen con los cambios recientes; por favor revísalo y confirma tu compra.',
+                ]);
             }
 
             // Bloqueo pesimista de productos para validar stock y evitar condiciones de carrera
@@ -106,6 +127,19 @@ class TiendaCheckoutService
             $baseGravableCentavos = (int) $totales['base_gravable_centavos'];
             $impuestoCentavos = (int) $totales['total_impuestos_centavos'];
             $totalCentavos = (int) $totales['total_centavos'];
+
+            // Validación de cotización: si el total o condiciones tributarias/promocionales cambiaron
+            if ($totalEsperadoCentavos !== null && $totalCentavos !== (int) $totalEsperadoCentavos) {
+                throw ValidationException::withMessages([
+                    'cotizacion' => "Los importes de tu compra han cambiado. El total actualizado es de {$totales['total_formateado']}; por favor revisa el resumen actualizado y confirma tu compra.",
+                ]);
+            }
+
+            if ($cotizacionHashEsperado !== null && ! hash_equals($totales['cotizacion_hash'], $cotizacionHashEsperado)) {
+                throw ValidationException::withMessages([
+                    'cotizacion' => 'Las condiciones de precio, promociones o impuestos han cambiado. Hemos actualizado tu resumen; por favor revísalo y confirma tu compra.',
+                ]);
+            }
 
             // Reproducir rechazo de pago demo a petición del usuario
             if ($simularRechazo) {

@@ -9,9 +9,19 @@
         <p>Completa tus datos de contacto y selecciona tu método de pago simulado.</p>
     </div>
 
+    @if($errors->has('cotizacion'))
+        <div style="margin-bottom:24px;padding:16px 20px;background:#fff1f0;border:1px solid #ffa39e;border-radius:10px;color:#cf1322">
+            <strong style="display:block;font-size:1.05rem;margin-bottom:4px">⚠ Resumen actualizado requerido</strong>
+            <p style="margin:0;font-size:.95rem">{{ $errors->first('cotizacion') }}</p>
+        </div>
+    @endif
+
     <form method="post" action="{{ route('checkout.store') }}">
         @csrf
         <input type="hidden" name="idempotency_key" value="{{ Str::uuid() }}">
+        <input type="hidden" name="version_carrito" value="{{ $carrito->version }}">
+        <input type="hidden" name="total_esperado_centavos" value="{{ $totales['total_centavos'] }}">
+        <input type="hidden" name="cotizacion_hash" value="{{ $totales['cotizacion_hash'] }}">
 
         <div class="checkout-layout">
             <div>

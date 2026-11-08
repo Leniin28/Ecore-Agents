@@ -53,6 +53,9 @@ class CheckoutController extends Controller
             'metodo_pago' => ['required', 'string', 'in:'.implode(',', array_keys(Pago::METODOS))],
             'simular_fallo' => ['nullable', 'boolean'],
             'idempotency_key' => ['nullable', 'string', 'max:64'],
+            'version_carrito' => ['nullable', 'integer'],
+            'total_esperado_centavos' => ['nullable', 'integer'],
+            'cotizacion_hash' => ['nullable', 'string', 'max:128'],
         ]);
 
         $datosEntrega = [
@@ -73,7 +76,10 @@ class CheckoutController extends Controller
             $validated['metodo_pago'],
             $codigoPromocion,
             $idempotencyKey,
-            $simularFallo
+            $simularFallo,
+            isset($validated['version_carrito']) ? (int) $validated['version_carrito'] : null,
+            isset($validated['total_esperado_centavos']) ? (int) $validated['total_esperado_centavos'] : null,
+            $validated['cotizacion_hash'] ?? null
         );
 
         session()->forget('carrito_promocion');

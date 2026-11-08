@@ -69,16 +69,21 @@ class TiendaCarritoService
 
         if ($detalleExistente) {
             $detalleExistente->update(['cantidad' => $detalleExistente->cantidad + $cantidad]);
+            $carrito->increment('version');
 
             return $detalleExistente->fresh();
         }
 
-        return $carrito->detalles()->create([
+        $detalleNuevo = $carrito->detalles()->create([
             'producto_id' => $producto->id,
             'cantidad' => $cantidad,
             'configuracion' => $configuracion,
             'configuracion_hash' => $configHash,
         ]);
+
+        $carrito->increment('version');
+
+        return $detalleNuevo;
     }
 
     /**
@@ -108,6 +113,7 @@ class TiendaCarritoService
         }
 
         $detalle->update(['cantidad' => $cantidad]);
+        $carrito->increment('version');
 
         return $detalle->fresh();
     }
@@ -119,6 +125,7 @@ class TiendaCarritoService
     {
         $carrito = $this->obtenerCarrito($user);
         $carrito->detalles()->where('id', $detalleId)->delete();
+        $carrito->increment('version');
     }
 
     /**
@@ -128,6 +135,7 @@ class TiendaCarritoService
     {
         $carrito = $this->obtenerCarrito($user);
         $carrito->detalles()->delete();
+        $carrito->increment('version');
     }
 
     /**
@@ -234,7 +242,24 @@ class TiendaCarritoService
 
         $totalCentavos = $baseGravableCentavos + $totalImpuestosCentavos;
 
+        $cotizacionHash = hash_hmac(
+            'sha256',
+            sprintf(
+                '%d|%d|%d|%d|%d|%d|%s',
+                $carrito->id,
+                $carrito->version,
+                $subtotalCentavos,
+                $descuentoCentavos,
+                $totalImpuestosCentavos,
+                $totalCentavos,
+                $promocionValida ? $promocion->codigo : ''
+            ),
+            (string) (config('app.key') ?: 'ecore-agents-secret')
+        );
+
         return [
+            'version' => $carrito->version,
+            'cotizacion_hash' => $cotizacionHash,
             'total_items' => $totalItems,
             'lineas' => $lineas,
             'subtotal_centavos' => $subtotalCentavos,
