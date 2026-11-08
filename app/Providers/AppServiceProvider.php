@@ -4,8 +4,8 @@ namespace App\Providers;
 
 use App\Models\Producto;
 use App\Models\User;
-use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\ServiceProvider;
 use Illuminate\View\View as BladeView;
 
 class AppServiceProvider extends ServiceProvider
@@ -31,6 +31,16 @@ class AppServiceProvider extends ServiceProvider
         View::composer('layouts.app', function (BladeView $view): void {
             $request = request();
             $user = $request->user();
+
+            // Contador persistente de artículos en el carrito para el cliente autenticado
+            $cantidadCarrito = 0;
+            if ($user && $user->cliente) {
+                $carrito = $user->cliente->carrito;
+                if ($carrito) {
+                    $cantidadCarrito = (int) $carrito->detalles()->sum('cantidad');
+                }
+            }
+            $view->with('cantidadCarrito', $cantidadCarrito);
 
             if (! $user?->hasModuleAccess(User::MODULE_SCM)
                 || ! in_array('auth', $request->route()?->gatherMiddleware() ?? [], true)) {

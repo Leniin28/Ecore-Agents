@@ -52,15 +52,25 @@ class RegisteredUserController extends Controller
                 'permissions' => null,
             ]);
 
-            $cliente = Cliente::query()->where('correo', $user->email)->first();
+            // Protección frente a apropiación indebida de historial o clientes vinculados:
+            // Una coincidencia de correo por sí sola no permite apropiarse de un cliente que ya
+            // pertenece a otro usuario o que contiene historial de órdenes empresariales previas.
+            $cliente = Cliente::query()
+                ->where('correo', $user->email)
+                ->whereNull('user_id')
+                ->first();
 
-            if ($cliente) {
+            if ($cliente && ! $cliente->ordenesEmpresariales()->exists()) {
                 $cliente->update(['user_id' => $user->id]);
             } else {
+                $correoCliente = Cliente::query()->where('correo', $validated['email'])->exists()
+                    ? "user_{$user->id}_{$validated['email']}"
+                    : $validated['email'];
+
                 Cliente::create([
                     'user_id' => $user->id,
                     'nombre' => $validated['name'],
-                    'correo' => $validated['email'],
+                    'correo' => $correoCliente,
                     'telefono' => $validated['telefono'],
                     'empresa' => $validated['empresa'] ?? null,
                     'fecha_registro' => now()->toDateString(),
