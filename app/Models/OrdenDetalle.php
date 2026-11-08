@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-#[Fillable(['orden_empresarial_id', 'producto_id', 'cantidad', 'precio_unitario', 'subtotal'])]
+#[Fillable(['orden_empresarial_id', 'producto_id', 'cantidad', 'precio_unitario', 'subtotal', 'configuracion'])]
 class OrdenDetalle extends Model
 {
     public function ordenEmpresarial(): BelongsTo
@@ -22,7 +22,7 @@ class OrdenDetalle extends Model
 
     protected function casts(): array
     {
-        return ['cantidad' => 'integer', 'precio_unitario' => 'decimal:2', 'subtotal' => 'decimal:2'];
+        return ['cantidad' => 'integer', 'precio_unitario' => 'decimal:2', 'subtotal' => 'decimal:2', 'configuracion' => 'array'];
     }
 
     public function movimiento(): HasOne

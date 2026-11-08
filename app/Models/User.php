@@ -78,6 +78,43 @@ class User extends Authenticatable
         return $this->hasOne(Cliente::class);
     }
 
+    public function obtenerCliente(): Cliente
+    {
+        if ($this->relationLoaded('cliente') && $this->cliente) {
+            return $this->cliente;
+        }
+
+        $cliente = $this->cliente()->first();
+        if ($cliente) {
+            return $cliente;
+        }
+
+        $clientePorCorreo = Cliente::query()
+            ->where('correo', $this->email)
+            ->whereNull('user_id')
+            ->first();
+
+        if ($clientePorCorreo && ! $clientePorCorreo->ordenesEmpresariales()->exists()) {
+            $clientePorCorreo->update(['user_id' => $this->id]);
+            return $clientePorCorreo;
+        }
+
+        $correo = Cliente::query()->where('correo', $this->email)->exists()
+            ? "user_{$this->id}_{$this->email}"
+            : $this->email;
+
+        return Cliente::create([
+            'user_id' => $this->id,
+            'nombre' => $this->name,
+            'correo' => $correo,
+            'telefono' => 'Sin registrar',
+            'empresa' => null,
+            'fecha_registro' => now()->toDateString(),
+            'estado' => Cliente::ESTADO_ACTIVO,
+            'etapa_crm' => Cliente::ETAPA_PROSPECTO,
+        ]);
+    }
+
     public function ordenesEmpresariales(): HasMany
     {
         return $this->hasMany(OrdenEmpresarial::class, 'usuario_id');
@@ -96,6 +133,16 @@ class User extends Authenticatable
     public function procesosInternos(): HasMany
     {
         return $this->hasMany(ProcesoInterno::class, 'usuario_id');
+    }
+
+    public function monederoMovimientos(): HasMany
+    {
+        return $this->hasMany(MonederoMovimiento::class, 'usuario_id');
+    }
+
+    public function ticketsRespondidos(): HasMany
+    {
+        return $this->hasMany(TicketAtencion::class, 'respondido_por');
     }
 
     public function auditorias(): HasMany

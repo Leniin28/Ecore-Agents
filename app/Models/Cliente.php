@@ -61,6 +61,26 @@ class Cliente extends Model
         return $this->hasMany(OrdenEmpresarial::class);
     }
 
+    public function carrito(): HasOne
+    {
+        return $this->hasOne(Carrito::class);
+    }
+
+    public function monedero(): HasOne
+    {
+        return $this->hasOne(Monedero::class);
+    }
+
+    public function pagos(): HasMany
+    {
+        return $this->hasMany(Pago::class);
+    }
+
+    public function ticketsAtencion(): HasMany
+    {
+        return $this->hasMany(TicketAtencion::class)->latest('id');
+    }
+
     public function ultimaInteraccion(): HasOne
     {
         return $this->hasOne(Interaccion::class)->latestOfMany('fecha');

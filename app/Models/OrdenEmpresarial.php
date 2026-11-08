@@ -32,6 +32,16 @@ class OrdenEmpresarial extends Model
         return $this->hasMany(OrdenDetalle::class);
     }
 
+    public function pago(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Pago::class);
+    }
+
+    public function tickets(): HasMany
+    {
+        return $this->hasMany(TicketAtencion::class);
+    }
+
     public function folio(): string
     {
         return 'ORD-'.str_pad((string) $this->id, 5, '0', STR_PAD_LEFT);
