@@ -100,6 +100,8 @@ Route::middleware('auth')->group(function () {
         Route::middleware('module:crm')->group(function () {
             Route::resource('clientes', ClienteController::class);
             Route::put('/clientes/{cliente}/etapa', [ClienteController::class, 'updateEtapa'])->name('clientes.etapa.update');
+            Route::get('/clientes/{cliente}/vincular', [ClienteController::class, 'vincularForm'])->name('clientes.vincular');
+            Route::post('/clientes/{cliente}/vincular', [ClienteController::class, 'vincular'])->name('clientes.vincular.store');
             Route::get('/clientes/{cliente}/interacciones', [InteraccionController::class, 'index'])->name('clientes.interacciones.index');
             Route::post('/interacciones', [InteraccionController::class, 'store'])->name('interacciones.store');
         });
@@ -155,6 +157,8 @@ Route::middleware('auth')->group(function () {
 
         Route::resource('clientes', ClienteController::class);
         Route::put('/clientes/{cliente}/etapa', [ClienteController::class, 'updateEtapa'])->name('clientes.etapa.update');
+        Route::get('/clientes/{cliente}/vincular', [ClienteController::class, 'vincularForm'])->name('clientes.vincular');
+        Route::post('/clientes/{cliente}/vincular', [ClienteController::class, 'vincular'])->name('clientes.vincular.store');
         Route::get('/clientes/{cliente}/interacciones', [InteraccionController::class, 'index'])->name('clientes.interacciones.index');
         Route::post('/interacciones', [InteraccionController::class, 'store'])->name('interacciones.store');
 

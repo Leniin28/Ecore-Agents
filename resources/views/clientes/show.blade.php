@@ -27,8 +27,29 @@
                     <div><dt>Fecha de registro</dt><dd>{{ $cliente->fecha_registro->format('d/m/Y') }}</dd></div>
                     <div><dt>Estado</dt><dd>{{ ucfirst($cliente->estado) }}</dd></div>
                     <div><dt>Etapa CRM</dt><dd>{{ $cliente->etapaCrmLabel() }}</dd></div>
+                    <div>
+                        <dt>Cuenta de usuario</dt>
+                        <dd>
+                            @if($cliente->user)
+                                <span style="font-weight:700;color:var(--blue)">{{ $cliente->user->name }} ({{ $cliente->user->email }})</span>
+                            @else
+                                <span style="color:var(--muted)">Sin vincular</span>
+                                @if(auth()->user()->isAdmin())
+                                    <a class="button" href="{{ $moduleRoute('clientes.vincular', $cliente) }}" style="display:inline-block;padding:2px 8px;font-size:.8rem;margin-left:8px">
+                                        Vincular
+                                    </a>
+                                @endif
+                            @endif
+                        </dd>
+                    </div>
                 </dl>
-                <div class="form-actions"><a class="button" href="{{ $moduleRoute('clientes.edit', $cliente) }}">Editar cliente</a><a class="back-button" href="{{ $moduleRoute('clientes.index') }}">Volver al listado</a></div>
+                <div class="form-actions">
+                    <a class="button" href="{{ $moduleRoute('clientes.edit', $cliente) }}">Editar cliente</a>
+                    @if(auth()->user()->isAdmin() && ! $cliente->user_id)
+                        <a class="button" href="{{ $moduleRoute('clientes.vincular', $cliente) }}" style="background:#0284c7">Vincular a usuario</a>
+                    @endif
+                    <a class="back-button" href="{{ $moduleRoute('clientes.index') }}">Volver al listado</a>
+                </div>
             </article>
 
             <article class="stage-panel">

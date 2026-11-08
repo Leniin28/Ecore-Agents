@@ -87,6 +87,45 @@ class ClienteController extends Controller
             ->with('success', 'Etapa CRM actualizada correctamente.');
     }
 
+    public function vincularForm(Request $request, Cliente $cliente): View|RedirectResponse
+    {
+        abort_unless($request->user()?->isAdmin(), 403, 'Solo un administrador puede realizar vinculaciones de clientes.');
+
+        if ($cliente->user_id !== null) {
+            return redirect()->to(\App\Support\ModuleNavigation::route('clientes.show', $cliente))
+                ->with('warning', 'El cliente ya se encuentra vinculado a una cuenta de usuario.');
+        }
+
+        $usuarios = \App\Models\User::query()
+            ->whereDoesntHave('cliente')
+            ->orderBy('name')
+            ->get();
+
+        return view('clientes.vincular', compact('cliente', 'usuarios'));
+    }
+
+    public function vincular(Request $request, Cliente $cliente): RedirectResponse
+    {
+        abort_unless($request->user()?->isAdmin(), 403, 'Solo un administrador puede realizar vinculaciones de clientes.');
+
+        $validated = $request->validate([
+            'user_id' => ['required', 'integer', 'exists:users,id'],
+            'motivo' => ['required', 'string', 'min:5', 'max:500'],
+        ], [
+            'user_id.required' => 'Debes seleccionar una cuenta de usuario.',
+            'user_id.exists' => 'El usuario seleccionado no existe.',
+            'motivo.required' => 'El motivo de vinculación es obligatorio.',
+            'motivo.min' => 'El motivo de vinculación debe tener al menos 5 caracteres.',
+        ]);
+
+        $targetUser = \App\Models\User::findOrFail($validated['user_id']);
+
+        $cliente->vincularAUsuario($targetUser, $request->user(), $validated['motivo']);
+
+        return redirect()->to(\App\Support\ModuleNavigation::route('clientes.show', $cliente))
+            ->with('success', "Se vinculó exitosamente al cliente {$cliente->nombre} con el usuario {$targetUser->email}.");
+    }
+
     public function apiIndex(Request $request): JsonResponse
     {
         return response()->json([

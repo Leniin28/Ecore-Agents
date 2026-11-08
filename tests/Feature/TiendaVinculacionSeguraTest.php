@@ -174,4 +174,149 @@ class TiendaVinculacionSeguraTest extends TestCase
         $this->expectException(\Symfony\Component\HttpKernel\Exception\HttpException::class);
         $cliente->vincularAUsuario($clientUser, $empleado, 'Intento sin permiso');
     }
+
+    public function test_admin_can_access_vincular_form_and_submit_linking_with_audit(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $targetUser = User::factory()->create(['role' => User::ROLE_CLIENTE, 'email' => 'nuevo.socio@portal.local']);
+
+        $cliente = Cliente::create([
+            'nombre' => 'Prospecto Físico',
+            'correo' => 'nuevo.socio@portal.local',
+            'telefono' => '5511223344',
+            'fecha_registro' => now()->toDateString(),
+            'estado' => Cliente::ESTADO_ACTIVO,
+            'etapa_crm' => Cliente::ETAPA_PROSPECTO,
+        ]);
+
+        // Formulario accesible por administrador
+        $response = $this->actingAs($admin)->get(route('clientes.vincular', $cliente));
+        $response->assertOk();
+        $response->assertSee('Vincular cliente a cuenta de usuario');
+        $response->assertSee('nuevo.socio@portal.local');
+
+        // Envío válido de vinculación
+        $postResponse = $this->actingAs($admin)->post(route('clientes.vincular.store', $cliente), [
+            'user_id' => $targetUser->id,
+            'motivo' => 'Verificación presencial de representante legal y poder notarial.',
+        ]);
+
+        $postResponse->assertRedirect(route('clientes.show', $cliente));
+        $postResponse->assertSessionHas('success');
+
+        $cliente->refresh();
+        $this->assertSame($targetUser->id, $cliente->user_id);
+
+        $this->assertDatabaseHas('auditorias', [
+            'usuario_id' => $admin->id,
+            'accion' => 'vincular_cliente_usuario',
+            'entidad' => 'cliente',
+            'entidad_id' => $cliente->id,
+        ]);
+    }
+
+    public function test_non_admin_cannot_access_vincular_routes(): void
+    {
+        $empleadoCrm = User::factory()->create([
+            'role' => User::ROLE_EMPLEADO,
+            'permissions' => [User::MODULE_CRM],
+        ]);
+        $cliente = Cliente::create([
+            'nombre' => 'Prospecto Seguro',
+            'correo' => 'ps@test.local',
+            'telefono' => '55',
+            'fecha_registro' => now()->toDateString(),
+            'estado' => 'activo',
+            'etapa_crm' => 'prospecto',
+        ]);
+
+        // GET bloqueado 403
+        $this->actingAs($empleadoCrm)
+            ->get(route('clientes.vincular', $cliente))
+            ->assertForbidden();
+
+        // POST bloqueado 403
+        $this->actingAs($empleadoCrm)
+            ->post(route('clientes.vincular.store', $cliente), [
+                'user_id' => 999,
+                'motivo' => 'Intento ilegítimo de vinculación',
+            ])
+            ->assertForbidden();
+    }
+
+    public function test_vincular_rejects_short_motive_and_already_linked_users(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $user1 = User::factory()->create(['role' => User::ROLE_CLIENTE]);
+        $user2 = User::factory()->create(['role' => User::ROLE_CLIENTE]);
+
+        $cliente1 = Cliente::create([
+            'nombre' => 'Cliente A',
+            'correo' => 'a@test.local',
+            'telefono' => '55',
+            'fecha_registro' => now()->toDateString(),
+            'estado' => 'activo',
+            'etapa_crm' => 'prospecto',
+            'user_id' => $user1->id, // Ya vinculado
+        ]);
+
+        $cliente2 = Cliente::create([
+            'nombre' => 'Cliente B',
+            'correo' => 'b@test.local',
+            'telefono' => '55',
+            'fecha_registro' => now()->toDateString(),
+            'estado' => 'activo',
+            'etapa_crm' => 'prospecto',
+        ]);
+
+        // 1. Cliente ya vinculado redirige con advertencia al intentar ver el formulario
+        $this->actingAs($admin)
+            ->get(route('clientes.vincular', $cliente1))
+            ->assertRedirect(route('clientes.show', $cliente1));
+
+        // 2. Motivo corto es rechazado
+        $this->actingAs($admin)
+            ->post(route('clientes.vincular.store', $cliente2), [
+                'user_id' => $user2->id,
+                'motivo' => 'abc', // Menor a 5 caracteres
+            ])
+            ->assertSessionHasErrors(['motivo']);
+
+        // 3. Vincular a un usuario que ya tiene otro cliente es rechazado
+        $this->actingAs($admin)
+            ->post(route('clientes.vincular.store', $cliente2), [
+                'user_id' => $user1->id, // User 1 ya pertenece a Cliente A
+                'motivo' => 'Asignar a usuario duplicado',
+            ])
+            ->assertSessionHasErrors(['user']);
+    }
+
+    public function test_vincular_preserves_erp_navigation_context(): void
+    {
+        $admin = User::factory()->create(['role' => User::ROLE_ADMIN]);
+        $targetUser = User::factory()->create(['role' => User::ROLE_CLIENTE]);
+        $cliente = Cliente::create([
+            'nombre' => 'Prospecto ERP',
+            'correo' => 'erp.lead@test.local',
+            'telefono' => '5511223344',
+            'fecha_registro' => now()->toDateString(),
+            'estado' => 'activo',
+            'etapa_crm' => 'prospecto',
+        ]);
+
+        // Acceso desde ERP: /erp/clientes/{cliente}/vincular
+        $response = $this->actingAs($admin)->get(route('erp.clientes.vincular', $cliente));
+        $response->assertOk();
+        // Debe usar el layout ERP y conservar los enlaces y formulario dentro de /erp
+        $response->assertSee('aria-label="Menú ERP"', false);
+        $response->assertSee(route('erp.clientes.vincular.store', $cliente));
+
+        // Envío dentro de ERP: redirige conservando la ruta /erp/clientes/{cliente}
+        $postResponse = $this->actingAs($admin)->post(route('erp.clientes.vincular.store', $cliente), [
+            'user_id' => $targetUser->id,
+            'motivo' => 'Vinculación formal gestionada desde el menú ERP.',
+        ]);
+
+        $postResponse->assertRedirect(route('erp.clientes.show', $cliente));
+    }
 }

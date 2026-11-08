@@ -55,6 +55,9 @@
                                     <td class="table-actions">
                                         <a href="{{ $moduleRoute('clientes.show', $cliente) }}">Ver</a>
                                         <a href="{{ $moduleRoute('clientes.edit', $cliente) }}">Editar</a>
+                                        @if(auth()->user()->isAdmin() && ! $cliente->user_id)
+                                            <a href="{{ $moduleRoute('clientes.vincular', $cliente) }}" style="color:#0284c7;font-weight:700">Vincular</a>
+                                        @endif
                                         @if(auth()->user()->isAdmin())
                                             <form method="post" action="{{ $moduleRoute('clientes.destroy', $cliente) }}" data-confirm-delete="¿Eliminar a {{ $cliente->nombre }}?">
                                                 @csrf
