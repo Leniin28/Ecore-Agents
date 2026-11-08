@@ -68,6 +68,33 @@
                 </div>
             </div>
 
+            @if($pago->metodo === 'transferencia_demo' && $pago->estado === 'pendiente')
+                <div style="background:#fffbeb;border:2px solid #fde68a;border-radius:14px;padding:22px;margin-bottom:28px">
+                    <span class="section-eyebrow" style="color:#b45309">Acción administrativa requerida</span>
+                    <h3 style="margin:4px 0 10px;font-size:1.2rem;color:#78350f">Validación de transferencia bancaria demo</h3>
+                    <p style="margin:0 0 16px;color:#92400e;font-size:.9rem;line-height:1.5">
+                        Esta compra fue realizada con el método <strong>Transferencia bancaria demo</strong>. Verifica el comprobante antes de autorizar. Al confirmar, el sistema revalidará el stock comercial de cada recurso, registrará las salidas de inventario SCM, actualizará la orden a <em>procesada</em> y registrará la auditoría correspondiente.
+                    </p>
+
+                    <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start">
+                        <form method="post" action="{{ route('admin.tienda.ordenes.confirmar-transferencia', $pago) }}" onsubmit="return confirm('¿Confirmar esta transferencia demo y descontar inventario en SCM?')">
+                            @csrf
+                            <button class="button" type="submit" style="background:#059669;min-height:44px">
+                                ✓ Confirmar y procesar transferencia
+                            </button>
+                        </form>
+
+                        <form method="post" action="{{ route('admin.tienda.ordenes.rechazar-transferencia', $pago) }}" style="display:flex;gap:8px;flex:1;min-width:280px" onsubmit="return confirm('¿Rechazar esta transferencia demo y cancelar la orden?')">
+                            @csrf
+                            <input type="text" name="motivo" placeholder="Motivo de rechazo (opcional)" style="flex:1;min-height:44px;border:1px solid #d1d5db;border-radius:8px;padding:0 12px;font-size:.88rem">
+                            <button class="back-button" type="submit" style="color:#dc2626;border-color:#fca5a5;min-height:44px">
+                                ✕ Rechazar transferencia
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            @endif
+
             <h3 style="margin:0 0 14px;font-size:1.15rem">Líneas y desglose comercial</h3>
             <div class="table-responsive" style="margin-bottom:24px">
                 <table class="cart-table">

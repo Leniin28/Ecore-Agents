@@ -94,6 +94,14 @@ class OrdenController extends Controller
     private function cancelarOrden(Request $request, OrdenEmpresarial $orden): OrdenEmpresarial
     {
         return DB::transaction(function () use ($request, $orden) {
+            $orden = OrdenEmpresarial::query()->lockForUpdate()->findOrFail($orden->id);
+
+            if ($orden->pago()->exists()) {
+                throw ValidationException::withMessages([
+                    'pago' => 'Esta orden corresponde a una compra de la tienda comercial. Debe gestionarse desde la administración de Tienda para no desincronizar el pago.',
+                ]);
+            }
+
             $cambio = OrdenEmpresarial::query()->whereKey($orden->id)->where('estado', OrdenEmpresarial::PENDIENTE)
                 ->update(['estado' => OrdenEmpresarial::CANCELADA]);
             if ($cambio !== 1) {
@@ -110,6 +118,13 @@ class OrdenController extends Controller
     {
         return DB::transaction(function () use ($request, $orden) {
             $orden = OrdenEmpresarial::query()->lockForUpdate()->findOrFail($orden->id);
+
+            if ($orden->pago()->exists()) {
+                throw ValidationException::withMessages([
+                    'pago' => 'Esta orden corresponde a una compra de la tienda comercial con pago asociado. Debe confirmarse desde la administración de Tienda para validar el comprobante.',
+                ]);
+            }
+
             if ($orden->estado !== OrdenEmpresarial::PENDIENTE) {
                 throw ValidationException::withMessages(['estado' => 'Solo se puede procesar una orden pendiente. Esta orden ya fue procesada o cancelada.']);
             }

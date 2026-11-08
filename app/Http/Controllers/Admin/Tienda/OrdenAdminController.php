@@ -5,11 +5,16 @@ namespace App\Http\Controllers\Admin\Tienda;
 use App\Http\Controllers\Controller;
 use App\Models\OrdenEmpresarial;
 use App\Models\Pago;
+use App\Services\TiendaCheckoutService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class OrdenAdminController extends Controller
 {
+    public function __construct(
+        protected TiendaCheckoutService $checkoutService
+    ) {}
     public function index(Request $request): View
     {
         $buscar = $request->string('buscar')->trim()->toString();
@@ -48,5 +53,25 @@ class OrdenAdminController extends Controller
         ]);
 
         return view('admin.tienda.ordenes.show', compact('pago'));
+    }
+
+    public function confirmarTransferencia(Request $request, Pago $pago): RedirectResponse
+    {
+        $this->checkoutService->confirmarTransferencia($pago, $request->user());
+
+        return redirect()->route('admin.tienda.ordenes.show', $pago)
+            ->with('success', "Transferencia demo de la orden {$pago->ordenEmpresarial?->folio()} confirmada exitosamente. Se descontó el inventario SCM y la orden pasó a procesada.");
+    }
+
+    public function rechazarTransferencia(Request $request, Pago $pago): RedirectResponse
+    {
+        $validated = $request->validate([
+            'motivo' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $this->checkoutService->rechazarTransferencia($pago, $request->user(), $validated['motivo'] ?? null);
+
+        return redirect()->route('admin.tienda.ordenes.show', $pago)
+            ->with('info', "Transferencia demo de la orden {$pago->ordenEmpresarial?->folio()} rechazada. La orden ha sido cancelada.");
     }
 }

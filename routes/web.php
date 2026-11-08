@@ -213,6 +213,8 @@ Route::middleware('auth')->group(function () {
             // Compras y pagos de la tienda
             Route::get('/ordenes', [OrdenAdminController::class, 'index'])->name('ordenes.index');
             Route::get('/ordenes/{pago}', [OrdenAdminController::class, 'show'])->name('ordenes.show');
+            Route::post('/ordenes/{pago}/confirmar-transferencia', [OrdenAdminController::class, 'confirmarTransferencia'])->name('ordenes.confirmar-transferencia');
+            Route::post('/ordenes/{pago}/rechazar-transferencia', [OrdenAdminController::class, 'rechazarTransferencia'])->name('ordenes.rechazar-transferencia');
         });
     });
 

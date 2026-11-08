@@ -5,14 +5,25 @@
 <section class="section" style="max-width:880px;margin:0 auto;padding-top:40px">
     <div style="background:#fff;border:1px solid var(--line);border-radius:22px;padding:clamp(24px, 5vw, 44px);box-shadow:var(--shadow)">
         <div style="text-align:center;margin-bottom:32px">
-            <div style="width:68px;height:68px;margin:0 auto 16px;background:#e6f9f0;color:#085a3a;border-radius:50%;display:grid;place-items:center;font-size:2rem;font-weight:900">
-                ✓
-            </div>
-            <span class="section-eyebrow">Compra simulada confirmada</span>
-            <h1 style="margin:4px 0 10px;font-size:clamp(1.8rem,4vw,2.5rem)">¡Gracias por tu compra!</h1>
-            <p style="color:var(--muted);font-size:1.05rem;margin:0">
-                Tu orden ha sido registrada exitosamente en el sistema ERP e integrada a los módulos de ECore Agents.
-            </p>
+            @if($pago->estado === 'pendiente')
+                <div style="width:68px;height:68px;margin:0 auto 16px;background:#fef3c7;color:#b45309;border-radius:50%;display:grid;place-items:center;font-size:2rem;font-weight:900">
+                    ⏳
+                </div>
+                <span class="section-eyebrow" style="color:#b45309">Transferencia demo registrada</span>
+                <h1 style="margin:4px 0 10px;font-size:clamp(1.8rem,4vw,2.5rem)">Orden pendiente de confirmación</h1>
+                <p style="color:var(--muted);font-size:1.05rem;margin:0">
+                    Tu orden por transferencia demo ha sido registrada. La administración validará el comprobante bancario antes de confirmar los cupos.
+                </p>
+            @else
+                <div style="width:68px;height:68px;margin:0 auto 16px;background:#e6f9f0;color:#085a3a;border-radius:50%;display:grid;place-items:center;font-size:2rem;font-weight:900">
+                    ✓
+                </div>
+                <span class="section-eyebrow">Compra simulada confirmada</span>
+                <h1 style="margin:4px 0 10px;font-size:clamp(1.8rem,4vw,2.5rem)">¡Gracias por tu compra!</h1>
+                <p style="color:var(--muted);font-size:1.05rem;margin:0">
+                    Tu orden ha sido registrada exitosamente en el sistema ERP e integrada a los módulos de ECore Agents.
+                </p>
+            @endif
         </div>
 
         <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:16px;padding:20px;background:#f8faff;border:1px solid #dbe6f6;border-radius:14px;margin-bottom:28px">

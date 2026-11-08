@@ -6,8 +6,15 @@
 <section class="dashboard-panel"><h2>Historial operativo</h2><ol class="erp-checklist">@forelse($orden->procesosInternos as $proceso)<li>✓ {{ $proceso->descripcion }} · {{ $proceso->fecha->format('d/m/Y H:i') }} · {{ $proceso->usuario?->name ?? 'Sistema' }}</li>@empty<li>Sin procesos registrados.</li>@endforelse</ol></section>
 <div class="form-actions">
 @if($orden->estado === \App\Models\OrdenEmpresarial::PENDIENTE)
+@if($orden->pago)
+<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;font-size:.9rem;color:#1e40af;display:flex;align-items:center;gap:12px">
+    <span>Esta orden proviene de la tienda en línea (pago {{ $orden->pago->metodoLabel() }} · {{ $orden->pago->estadoLabel() }}).</span>
+    <a href="{{ route('admin.tienda.ordenes.show', $orden->pago) }}" class="button" style="padding:6px 14px;font-size:.85rem">Gestionar comprobante en Tienda</a>
+</div>
+@else
 <form method="post" action="{{ route('erp.ordenes.procesar', $orden) }}">@csrf<button class="button" type="submit">Procesar orden</button></form>
 <form method="post" action="{{ route('erp.ordenes.cancelar', $orden) }}">@csrf<button class="back-button" type="submit">Cancelar orden</button></form>
+@endif
 @endif
 <a class="back-button" href="{{ route('erp.ordenes.index') }}">Ir a órdenes</a></div>
 @endsection
