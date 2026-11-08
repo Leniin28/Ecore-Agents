@@ -48,6 +48,7 @@ class MonederoAdminController extends Controller
             'tipo_ajuste' => ['required', 'in:credito,debito'],
             'monto_pesos' => ['required', 'numeric', 'min:0.01', 'max:1000000'],
             'motivo' => ['required', 'string', 'min:5', 'max:1000'],
+            'referencia_operacion' => ['nullable', 'string', 'max:64'],
         ]);
 
         $montoCentavos = (int) round(((float) $validated['monto_pesos']) * 100);
@@ -60,7 +61,8 @@ class MonederoAdminController extends Controller
             $request->user(),
             $montoCentavos,
             $validated['motivo'],
-            'Ajuste administrativo autorizado por '.$request->user()->name
+            'Ajuste administrativo autorizado por '.$request->user()->name,
+            $validated['referencia_operacion'] ?? null
         );
 
         return redirect()->route('admin.tienda.monederos.show', $monedero)

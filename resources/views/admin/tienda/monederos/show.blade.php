@@ -33,6 +33,7 @@
 
                 <form method="post" action="{{ route('admin.tienda.monederos.ajustar', $monedero) }}" style="display:grid;gap:14px">
                     @csrf
+                    <input type="hidden" name="referencia_operacion" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
 
                     <div>
                         <label for="tipo_ajuste" style="font-weight:800;display:block;margin-bottom:6px">Tipo de ajuste *</label>

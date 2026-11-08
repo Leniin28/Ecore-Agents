@@ -24,6 +24,7 @@
 
             <form method="post" action="{{ route('monedero.recargar') }}">
                 @csrf
+                <input type="hidden" name="referencia_operacion" value="{{ (string) \Illuminate\Support\Str::uuid() }}">
                 <div style="margin-bottom:14px">
                     <label for="monto_pesos" style="font-weight:800;display:block;margin-bottom:6px">Monto a recargar (MXN) *</label>
                     <input id="monto_pesos" name="monto_pesos" type="number" step="0.01" min="10" max="50000" value="{{ old('monto_pesos', 500) }}" required style="width:100%;min-height:44px;padding:8px 12px;border:1px solid #bcc9dc;border-radius:9px;font-size:1.1rem;font-weight:800">

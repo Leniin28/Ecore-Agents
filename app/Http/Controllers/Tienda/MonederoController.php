@@ -34,6 +34,7 @@ class MonederoController extends Controller
     {
         $validated = $request->validate([
             'monto_pesos' => ['required', 'numeric', 'min:10', 'max:50000'],
+            'referencia_operacion' => ['nullable', 'string', 'max:64'],
         ], [
             'monto_pesos.required' => 'Indica el monto que deseas recargar.',
             'monto_pesos.min' => 'El monto mínimo de recarga demo es de $10.00 MXN.',
@@ -49,7 +50,8 @@ class MonederoController extends Controller
             $cliente,
             $usuario,
             $montoCentavos,
-            "Recarga demostrativa solicitada desde el portal por el usuario {$usuario->name}"
+            "Recarga demostrativa solicitada desde el portal por el usuario {$usuario->name}",
+            $validated['referencia_operacion'] ?? null
         );
 
         return redirect()->route('monedero.index')
