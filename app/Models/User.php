@@ -89,24 +89,13 @@ class User extends Authenticatable
             return $cliente;
         }
 
-        $clientePorCorreo = Cliente::query()
-            ->where('correo', $this->email)
-            ->whereNull('user_id')
-            ->first();
-
-        if ($clientePorCorreo && ! $clientePorCorreo->ordenesEmpresariales()->exists()) {
-            $clientePorCorreo->update(['user_id' => $this->id]);
-            return $clientePorCorreo;
-        }
-
-        $correo = Cliente::query()->where('correo', $this->email)->exists()
-            ? "user_{$this->id}_{$this->email}"
-            : $this->email;
-
+        // Regla de seguridad: los métodos auxiliares nunca se apropian silenciosamente
+        // de un cliente CRM preexistente por coincidencia de correo.
+        // Si el usuario no tiene ficha vinculada, se crea un perfil exclusivo para este usuario con su correo real.
         return Cliente::create([
             'user_id' => $this->id,
             'nombre' => $this->name,
-            'correo' => $correo,
+            'correo' => $this->email,
             'telefono' => 'Sin registrar',
             'empresa' => null,
             'fecha_registro' => now()->toDateString(),

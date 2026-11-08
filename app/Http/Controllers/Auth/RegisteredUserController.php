@@ -52,32 +52,21 @@ class RegisteredUserController extends Controller
                 'permissions' => null,
             ]);
 
-            // Protección frente a apropiación indebida de historial o clientes vinculados:
-            // Una coincidencia de correo por sí sola no permite apropiarse de un cliente que ya
-            // pertenece a otro usuario o que contiene historial de órdenes empresariales previas.
-            $cliente = Cliente::query()
-                ->where('correo', $user->email)
-                ->whereNull('user_id')
-                ->first();
-
-            if ($cliente && ! $cliente->ordenesEmpresariales()->exists()) {
-                $cliente->update(['user_id' => $user->id]);
-            } else {
-                $correoCliente = Cliente::query()->where('correo', $validated['email'])->exists()
-                    ? "user_{$user->id}_{$validated['email']}"
-                    : $validated['email'];
-
-                Cliente::create([
-                    'user_id' => $user->id,
-                    'nombre' => $validated['name'],
-                    'correo' => $correoCliente,
-                    'telefono' => $validated['telefono'],
-                    'empresa' => $validated['empresa'] ?? null,
-                    'fecha_registro' => now()->toDateString(),
-                    'estado' => Cliente::ESTADO_ACTIVO,
-                    'etapa_crm' => Cliente::ETAPA_PROSPECTO,
-                ]);
-            }
+            // Regla de seguridad estricta: Una coincidencia de correo electrónico en registro público
+            // NUNCA autoriza apropiarse de un registro CRM previo.
+            // Para preservar la titularidad y confidencialidad de interacciones, monedero y tickets,
+            // el registro público siempre crea un perfil de cliente independiente vinculado a esta cuenta,
+            // conservando el correo auténtico del usuario sin prefijos artificiales.
+            Cliente::create([
+                'user_id' => $user->id,
+                'nombre' => $validated['name'],
+                'correo' => $validated['email'],
+                'telefono' => $validated['telefono'],
+                'empresa' => $validated['empresa'] ?? null,
+                'fecha_registro' => now()->toDateString(),
+                'estado' => Cliente::ESTADO_ACTIVO,
+                'etapa_crm' => Cliente::ETAPA_PROSPECTO,
+            ]);
 
             return $user;
         });

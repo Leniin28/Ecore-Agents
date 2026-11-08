@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 #[Fillable(['user_id', 'nombre', 'correo', 'telefono', 'empresa', 'fecha_registro', 'estado', 'etapa_crm'])]
 class Cliente extends Model
@@ -84,6 +86,48 @@ class Cliente extends Model
     public function ultimaInteraccion(): HasOne
     {
         return $this->hasOne(Interaccion::class)->latestOfMany('fecha');
+    }
+
+    /**
+     * Vinculación administrativa explícita y auditada de un cliente CRM con un usuario del sistema.
+     * Requiere que el cliente no esté ya vinculado y que el usuario no tenga otro cliente asignado.
+     */
+    public function vincularAUsuario(User $user, User $adminResponsable, string $motivo): void
+    {
+        abort_unless($adminResponsable->isAdmin(), 403, 'Solo un administrador puede realizar vinculaciones de clientes.');
+
+        $motivoLimpio = trim($motivo);
+        if (mb_strlen($motivoLimpio) < 5) {
+            throw ValidationException::withMessages(['motivo' => 'El motivo de vinculación debe tener al menos 5 caracteres.']);
+        }
+
+        DB::transaction(function () use ($user, $adminResponsable, $motivoLimpio) {
+            $cliente = Cliente::query()->lockForUpdate()->findOrFail($this->id);
+
+            if ($cliente->user_id !== null) {
+                throw ValidationException::withMessages([
+                    'cliente' => 'El cliente ya se encuentra vinculado a una cuenta de usuario.',
+                ]);
+            }
+
+            // Comprobar que el usuario no tenga ya otro cliente vinculado (clientes.user_id es único)
+            $clientePrevio = Cliente::query()->where('user_id', $user->id)->lockForUpdate()->first();
+            if ($clientePrevio) {
+                throw ValidationException::withMessages([
+                    'user' => 'El usuario ya cuenta con un perfil de cliente asignado.',
+                ]);
+            }
+
+            $cliente->update(['user_id' => $user->id]);
+
+            Auditoria::registrar(
+                $adminResponsable,
+                'vincular_cliente_usuario',
+                'cliente',
+                $cliente->id,
+                "Vinculó administrativamente al cliente {$cliente->nombre} con el usuario {$user->name} ({$user->email}). Motivo: {$motivoLimpio}."
+            );
+        });
     }
 
     /**
