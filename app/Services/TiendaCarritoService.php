@@ -54,20 +54,21 @@ class TiendaCarritoService
             ->where('configuracion_hash', $configHash)
             ->first();
 
-        $cantidadFinal = $cantidad;
-        if ($detalleExistente) {
-            $cantidadFinal += $detalleExistente->cantidad;
-        }
+        $cantidadActualEnCarrito = (int) $carrito->detalles()
+            ->where('producto_id', $producto->id)
+            ->sum('cantidad');
 
-        if ($cantidadFinal > $producto->stock_actual) {
-            $disponible = max(0, $producto->stock_actual - ($detalleExistente ? $detalleExistente->cantidad : 0));
+        $cantidadTotalRequerida = $cantidadActualEnCarrito + $cantidad;
+
+        if ($cantidadTotalRequerida > $producto->stock_actual) {
+            $disponible = max(0, $producto->stock_actual - $cantidadActualEnCarrito);
             throw ValidationException::withMessages([
-                'cantidad' => "Solo hay {$producto->stock_actual} unidades disponibles de {$producto->nombre}.".($disponible > 0 ? " Puedes agregar hasta {$disponible} más." : ' Ya tienes el stock máximo en tu carrito.'),
+                'cantidad' => "Solo hay {$producto->stock_actual} unidades disponibles de {$producto->nombre}.".($disponible > 0 ? " Puedes agregar hasta {$disponible} más en total." : ' Ya tienes el cupo máximo disponible en tu carrito entre tus configuraciones.'),
             ]);
         }
 
         if ($detalleExistente) {
-            $detalleExistente->update(['cantidad' => $cantidadFinal]);
+            $detalleExistente->update(['cantidad' => $detalleExistente->cantidad + $cantidad]);
 
             return $detalleExistente->fresh();
         }
@@ -92,9 +93,17 @@ class TiendaCarritoService
         $carrito = $this->obtenerCarrito($user);
         $detalle = $carrito->detalles()->with('producto')->findOrFail($detalleId);
 
-        if ($cantidad > $detalle->producto->stock_actual) {
+        $otrasLineasCantidad = (int) $carrito->detalles()
+            ->where('producto_id', $detalle->producto_id)
+            ->where('id', '!=', $detalle->id)
+            ->sum('cantidad');
+
+        $cantidadTotalRequerida = $otrasLineasCantidad + $cantidad;
+
+        if ($cantidadTotalRequerida > $detalle->producto->stock_actual) {
+            $disponible = max(0, $detalle->producto->stock_actual - $otrasLineasCantidad);
             throw ValidationException::withMessages([
-                'cantidad' => "Stock insuficiente: solo hay {$detalle->producto->stock_actual} unidades disponibles de {$detalle->producto->nombre}.",
+                'cantidad' => "Stock insuficiente: solo hay {$detalle->producto->stock_actual} unidades disponibles de {$detalle->producto->nombre} (tienes {$otrasLineasCantidad} en otra configuración). Máximo permitido para esta línea: {$disponible}.",
             ]);
         }
 

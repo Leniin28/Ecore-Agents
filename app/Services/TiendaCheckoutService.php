@@ -10,6 +10,7 @@ use App\Models\OrdenEmpresarial;
 use App\Models\Pago;
 use App\Models\ProcesoInterno;
 use App\Models\Producto;
+use App\Models\Promocion;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -76,17 +77,24 @@ class TiendaCheckoutService
                 ->get()
                 ->keyBy('id');
 
+            // Agrupar cantidades requeridas por producto_id para validar stock conjunto
+            // incluso cuando existan varias líneas con configuraciones diferentes del mismo producto.
+            $cantidadesTotalesPorProducto = [];
             foreach ($detalles as $detalle) {
-                $producto = $productos->get($detalle->producto_id);
+                $cantidadesTotalesPorProducto[$detalle->producto_id] = ($cantidadesTotalesPorProducto[$detalle->producto_id] ?? 0) + $detalle->cantidad;
+            }
+
+            foreach ($cantidadesTotalesPorProducto as $prodId => $cantTotal) {
+                $producto = $productos->get($prodId);
                 if (! $producto || ! $producto->visible_tienda) {
                     throw ValidationException::withMessages([
                         'carrito' => 'Uno de los productos en tu carrito ya no está disponible en la tienda comercial.',
                     ]);
                 }
 
-                if ($producto->stock_actual < $detalle->cantidad) {
+                if ($producto->stock_actual < $cantTotal) {
                     throw ValidationException::withMessages([
-                        'stock' => "Stock insuficiente para {$producto->nombre}. Hay {$producto->stock_actual} cupos disponibles y tienes {$detalle->cantidad} en tu carrito.",
+                        'stock' => "Stock insuficiente para {$producto->nombre}. Hay {$producto->stock_actual} cupos disponibles y requieres {$cantTotal} en conjunto.",
                     ]);
                 }
             }
@@ -245,6 +253,172 @@ class TiendaCheckoutService
                 'orden_empresarial',
                 $orden->id,
                 "Registró compra comercial {$orden->folio()} por {$pago->total_formateado} con método {$pago->metodoLabel()}."
+            );
+
+            return [
+                'orden' => $orden->fresh(['detalles.producto', 'cliente', 'pago']),
+                'pago' => $pago->fresh(['ordenEmpresarial', 'cliente']),
+            ];
+        }, 3);
+    }
+
+    /**
+     * Confirma una transferencia bancaria demo pendiente, validando stock y actualizando SCM/ERP de manera atómica.
+     */
+    public function confirmarTransferencia(Pago $pago, User $admin): array
+    {
+        abort_unless($admin->isAdmin(), 403, 'Solo un administrador autorizado puede confirmar transferencias bancarias demo.');
+
+        return DB::transaction(function () use ($pago, $admin) {
+            $pago = Pago::query()->lockForUpdate()->findOrFail($pago->id);
+            $orden = OrdenEmpresarial::query()->lockForUpdate()->findOrFail($pago->orden_empresarial_id);
+
+            // Idempotencia: si ya fue aprobada y procesada previamente, retornar sin duplicar movimientos ni procesos
+            if ($pago->estado === Pago::ESTADO_APROBADO && $orden->estado === OrdenEmpresarial::PROCESADA) {
+                return [
+                    'orden' => $orden->fresh(['detalles.producto', 'cliente', 'pago']),
+                    'pago' => $pago->fresh(['ordenEmpresarial', 'cliente']),
+                ];
+            }
+
+            if ($pago->estado !== Pago::ESTADO_PENDIENTE || $orden->estado !== OrdenEmpresarial::PENDIENTE) {
+                throw ValidationException::withMessages([
+                    'transferencia' => "No es posible confirmar la transferencia porque se encuentra en estado '{$pago->estado}' y la orden en '{$orden->estado}'. Solo se pueden confirmar transferencias pendientes.",
+                ]);
+            }
+
+            $detalles = $orden->detalles()->with('producto')->get();
+            if ($detalles->isEmpty()) {
+                throw ValidationException::withMessages([
+                    'detalles' => 'La orden no contiene líneas de detalle para procesar.',
+                ]);
+            }
+
+            // Agrupar cantidades por producto_id para revalidar stock conjunto con bloqueo pesimista
+            $cantidadesTotales = [];
+            foreach ($detalles as $detalle) {
+                $cantidadesTotales[$detalle->producto_id] = ($cantidadesTotales[$detalle->producto_id] ?? 0) + $detalle->cantidad;
+            }
+
+            $productos = Producto::query()
+                ->whereIn('id', array_keys($cantidadesTotales))
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
+
+            foreach ($cantidadesTotales as $prodId => $cantReq) {
+                $producto = $productos->get($prodId);
+                if (! $producto || $producto->stock_actual < $cantReq) {
+                    throw ValidationException::withMessages([
+                        'stock' => "Stock comercial insuficiente para confirmar la transferencia del producto '{$producto?->nombre}'. Se requieren {$cantReq} cupos y solo hay {$producto?->stock_actual} disponibles.",
+                    ]);
+                }
+            }
+
+            // Registrar procesos internos de validación de stock
+            $this->registrarProceso($orden, $admin, 'stock_validado', 'Disponibilidad de cupos confirmada para transferencia');
+
+            // Descontar inventario SCM para cada detalle
+            foreach ($detalles as $detalle) {
+                $this->inventarioService->registrar(
+                    $detalle->producto_id,
+                    $admin,
+                    [
+                        'tipo' => MovimientoInventario::TIPO_SALIDA,
+                        'cantidad' => $detalle->cantidad,
+                        'motivo' => MovimientoInventario::MOTIVO_VENTA,
+                        'fecha' => now(),
+                    ],
+                    $detalle->id
+                );
+            }
+
+            // Actualizar estado de la orden y del pago conjuntamente
+            $orden->update([
+                'estado' => OrdenEmpresarial::PROCESADA,
+                'procesada_at' => now(),
+            ]);
+
+            $pago->update([
+                'estado' => Pago::ESTADO_APROBADO,
+            ]);
+
+            // Procesos internos ERP
+            $this->registrarProceso($orden, $admin, 'inventario_actualizado', 'Inventario SCM actualizado tras confirmar transferencia');
+            $this->registrarProceso($orden, $admin, 'pago_transferencia_confirmado', 'Transferencia demo comprobada y autorizada por administración');
+            $this->registrarProceso($orden, $admin, 'orden_procesada', 'Compra completada exitosamente');
+
+            // Auditoría administrativa
+            Auditoria::registrar(
+                $admin,
+                'confirmar_transferencia_demo',
+                'orden_empresarial',
+                $orden->id,
+                "Confirmó la transferencia demo {$pago->referencia} de la orden {$orden->folio()} por {$pago->total_formateado}."
+            );
+
+            return [
+                'orden' => $orden->fresh(['detalles.producto', 'cliente', 'pago']),
+                'pago' => $pago->fresh(['ordenEmpresarial', 'cliente']),
+            ];
+        }, 3);
+    }
+
+    /**
+     * Rechaza una transferencia bancaria demo pendiente, cancelando la orden y liberando la promoción si aplica.
+     */
+    public function rechazarTransferencia(Pago $pago, User $admin, ?string $motivo = null): array
+    {
+        abort_unless($admin->isAdmin(), 403, 'Solo un administrador autorizado puede rechazar transferencias bancarias demo.');
+
+        return DB::transaction(function () use ($pago, $admin, $motivo) {
+            $pago = Pago::query()->lockForUpdate()->findOrFail($pago->id);
+            $orden = OrdenEmpresarial::query()->lockForUpdate()->findOrFail($pago->orden_empresarial_id);
+
+            // Idempotencia: si ya fue rechazada y cancelada, retornar sin cambios
+            if ($pago->estado === Pago::ESTADO_RECHAZADO && $orden->estado === OrdenEmpresarial::CANCELADA) {
+                return [
+                    'orden' => $orden->fresh(['detalles.producto', 'cliente', 'pago']),
+                    'pago' => $pago->fresh(['ordenEmpresarial', 'cliente']),
+                ];
+            }
+
+            if ($pago->estado !== Pago::ESTADO_PENDIENTE || $orden->estado !== OrdenEmpresarial::PENDIENTE) {
+                throw ValidationException::withMessages([
+                    'transferencia' => "No es posible rechazar una transferencia en estado '{$pago->estado}'. Solo se pueden rechazar transferencias pendientes.",
+                ]);
+            }
+
+            // Actualizar estados
+            $orden->update([
+                'estado' => OrdenEmpresarial::CANCELADA,
+            ]);
+
+            $pago->update([
+                'estado' => Pago::ESTADO_RECHAZADO,
+            ]);
+
+            // Liberar cupo de promoción si fue aplicada y estaba reservada
+            if ($pago->promocion_id) {
+                $promo = Promocion::query()->lockForUpdate()->find($pago->promocion_id);
+                if ($promo && $promo->usos_actuales > 0) {
+                    $promo->decrement('usos_actuales');
+                }
+            }
+
+            // Registrar procesos internos de rechazo
+            $descripcionRechazo = $motivo ? "Transferencia rechazada: {$motivo}" : 'Comprobante de transferencia bancaria demo rechazado por la administración';
+            $this->registrarProceso($orden, $admin, 'pago_transferencia_rechazado', $descripcionRechazo);
+            $this->registrarProceso($orden, $admin, 'orden_cancelada', 'Orden comercial cancelada por rechazo de pago');
+
+            // Auditoría
+            Auditoria::registrar(
+                $admin,
+                'rechazar_transferencia_demo',
+                'orden_empresarial',
+                $orden->id,
+                "Rechazó la transferencia demo {$pago->referencia} de la orden {$orden->folio()}." . ($motivo ? " Motivo: {$motivo}" : '')
             );
 
             return [
