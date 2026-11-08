@@ -12,18 +12,25 @@
             <a class="brand" href="{{ route('home') }}" aria-label="ECore Agents, inicio">ECore Agents</a>
             <nav class="site-nav" aria-label="Navegación principal">
                 <a href="{{ route('home') }}" @if(request()->routeIs('home')) aria-current="page" @endif>Inicio</a>
-                <a href="{{ route('home') }}#about">Nosotros</a>
-                <a href="{{ route('plans.index') }}" @if(request()->routeIs('plans.index', 'plans.show')) aria-current="page" @endif>Planes</a>
+                <a href="{{ route('catalogo.index') }}" @if(request()->routeIs('catalogo.*')) aria-current="page" @endif>Tienda / Catálogo</a>
                 <a href="{{ route('plans.custom') }}" @if(request()->routeIs('plans.custom')) aria-current="page" @endif>Personalizado</a>
-                <a href="{{ route('home') }}#contact">Contacto</a>
+                <a href="{{ route('carrito.index') }}" @if(request()->routeIs('carrito.*', 'checkout.*')) aria-current="page" @endif>
+                    Carrito
+                    <span class="nav-cart-badge" data-cart-count>{{ $cantidadCarrito ?? 0 }}</span>
+                </a>
                 @guest
                     <a href="{{ route('login') }}" @if(request()->routeIs('login')) aria-current="page" @endif>Iniciar sesión</a>
                     <a href="{{ route('register') }}" @if(request()->routeIs('register')) aria-current="page" @endif>Registro</a>
                 @endguest
                 @auth
+                    @if(auth()->user()->isClient())
+                        <a href="{{ route('mis-compras.index') }}" @if(request()->routeIs('mis-compras.*')) aria-current="page" @endif>Mis compras</a>
+                        <a href="{{ route('monedero.index') }}" @if(request()->routeIs('monedero.*')) aria-current="page" @endif>Monedero</a>
+                        <a href="{{ route('tickets.index') }}" @if(request()->routeIs('tickets.*')) aria-current="page" @endif>Atención</a>
+                    @endif
                     <a href="{{ route('profile') }}" @if(request()->routeIs('profile')) aria-current="page" @endif>Perfil</a>
                     @if(auth()->user()->hasModuleAccess('crm'))
-                        <a href="{{ route('admin') }}" @if(request()->routeIs('admin', 'clientes.*', 'mi-actividad', 'admin.usuarios.*')) aria-current="page" @endif>CRM</a>
+                        <a href="{{ route('admin') }}" @if(request()->routeIs('admin', 'clientes.*', 'mi-actividad', 'admin.usuarios.*', 'crm.tickets.*')) aria-current="page" @endif>CRM</a>
                     @endif
                     @if(auth()->user()->hasModuleAccess('scm'))
                         <a href="{{ route('scm.dashboard') }}" @if(request()->routeIs('scm.*')) aria-current="page" @endif>SCM</a>
@@ -32,6 +39,7 @@
                         @endif
                     @endif
                     @if(auth()->user()->isAdmin())
+                        <a href="{{ route('admin.tienda.productos.index') }}" @if(request()->routeIs('admin.tienda.*')) aria-current="page" @endif>Admin Tienda</a>
                         <a href="{{ route('erp.dashboard') }}" @if(request()->routeIs('erp.*')) aria-current="page" @endif>ERP</a>
                         <a href="{{ route('admin.auditoria.index') }}" @if(request()->routeIs('admin.auditoria.*')) aria-current="page" @endif>Auditoría</a>
                     @elseif(auth()->user()->hasModuleAccess('erp'))
@@ -46,6 +54,34 @@
         </header>
 
         <main>
+            @if(session('success') || session('status') || session('warning') || session('error') || $errors->any())
+                <div class="flash-alerts">
+                    @if(session('success'))
+                        <div class="alert-banner alert-success">{{ session('success') }}</div>
+                    @endif
+                    @if(session('status'))
+                        <div class="alert-banner alert-success">{{ session('status') }}</div>
+                    @endif
+                    @if(session('warning'))
+                        <div class="alert-banner alert-warning">{{ session('warning') }}</div>
+                    @endif
+                    @if(session('error'))
+                        <div class="alert-banner alert-error">{{ session('error') }}</div>
+                    @endif
+                    @if($errors->any())
+                        <div class="alert-banner alert-error">
+                            <div>
+                                <strong>Atención:</strong>
+                                <ul style="margin:4px 0 0;padding-left:18px">
+                                    @foreach($errors->all() as $err)
+                                        <li>{{ $err }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            @endif
             @yield('content')
         </main>
 
