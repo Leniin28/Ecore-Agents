@@ -268,4 +268,133 @@ class TiendaCheckoutQuoteDriftTest extends TestCase
         $this->assertSame(500000, $monedero->saldo_centavos);
         $this->assertDatabaseCount('monedero_movimientos', 1); // Solo la recarga inicial
     }
+
+    public function test_missing_quote_confirmation_fields_are_rejected_without_side_effects(): void
+    {
+        $user = User::factory()->create(['role' => User::ROLE_CLIENTE]);
+        $carritoService = app(TiendaCarritoService::class);
+        $carritoService->agregarProducto($user, $this->producto->id, 1);
+
+        $response = $this->actingAs($user)
+            ->from(route('checkout.index'))
+            ->post(route('checkout.store'), [
+                'nombre_contacto' => 'Comprador Incompleto',
+                'correo_contacto' => 'inc@demo.local',
+                'telefono_contacto' => '5512345678',
+                'metodo_pago' => 'tarjeta_demo',
+                // Omitir intencionalmente version_carrito, total_esperado_centavos y cotizacion_hash
+            ]);
+
+        $response->assertRedirect(route('checkout.index'));
+        $response->assertSessionHasErrors(['version_carrito', 'total_esperado_centavos', 'cotizacion_hash']);
+
+        // Cero efectos secundarios
+        $this->assertDatabaseCount('ordenes_empresariales', 0);
+        $this->assertDatabaseCount('pagos', 0);
+        $this->assertDatabaseCount('movimientos_inventario', 0);
+        $this->assertSame(15, $this->producto->fresh()->stock_actual);
+    }
+
+    public function test_null_quote_confirmation_fields_are_rejected_without_side_effects(): void
+    {
+        $user = User::factory()->create(['role' => User::ROLE_CLIENTE]);
+        $carritoService = app(TiendaCarritoService::class);
+        $carritoService->agregarProducto($user, $this->producto->id, 1);
+
+        $response = $this->actingAs($user)
+            ->from(route('checkout.index'))
+            ->post(route('checkout.store'), [
+                'nombre_contacto' => 'Comprador Nulo',
+                'correo_contacto' => 'nulo@demo.local',
+                'telefono_contacto' => '5512345678',
+                'metodo_pago' => 'tarjeta_demo',
+                'version_carrito' => null,
+                'total_esperado_centavos' => null,
+                'cotizacion_hash' => null,
+            ]);
+
+        $response->assertRedirect(route('checkout.index'));
+        $response->assertSessionHasErrors(['version_carrito', 'total_esperado_centavos', 'cotizacion_hash']);
+
+        // Cero efectos secundarios
+        $this->assertDatabaseCount('ordenes_empresariales', 0);
+        $this->assertDatabaseCount('pagos', 0);
+        $this->assertDatabaseCount('movimientos_inventario', 0);
+        $this->assertSame(15, $this->producto->fresh()->stock_actual);
+    }
+
+    public function test_invalid_format_quote_confirmation_fields_are_rejected_without_side_effects(): void
+    {
+        $user = User::factory()->create(['role' => User::ROLE_CLIENTE]);
+        $carritoService = app(TiendaCarritoService::class);
+        $carritoService->agregarProducto($user, $this->producto->id, 1);
+
+        $response = $this->actingAs($user)
+            ->from(route('checkout.index'))
+            ->post(route('checkout.store'), [
+                'nombre_contacto' => 'Comprador Invalido',
+                'correo_contacto' => 'invalido@demo.local',
+                'telefono_contacto' => '5512345678',
+                'metodo_pago' => 'tarjeta_demo',
+                'version_carrito' => 'no-es-entero',
+                'total_esperado_centavos' => -500,
+                'cotizacion_hash' => 'hash-corto',
+            ]);
+
+        $response->assertRedirect(route('checkout.index'));
+        $response->assertSessionHasErrors(['version_carrito', 'total_esperado_centavos', 'cotizacion_hash']);
+
+        // Cero efectos secundarios
+        $this->assertDatabaseCount('ordenes_empresariales', 0);
+        $this->assertDatabaseCount('pagos', 0);
+        $this->assertDatabaseCount('movimientos_inventario', 0);
+        $this->assertSame(15, $this->producto->fresh()->stock_actual);
+    }
+
+    public function test_resending_completed_purchase_returns_existing_result_without_duplication(): void
+    {
+        $user = User::factory()->create(['role' => User::ROLE_CLIENTE]);
+        $carritoService = app(TiendaCarritoService::class);
+        $carritoService->agregarProducto($user, $this->producto->id, 1);
+
+        $carrito = $carritoService->obtenerCarrito($user);
+        $totales = $carritoService->calcularTotales($carrito);
+
+        $idempotencyKey = (string) Str::uuid();
+
+        $payload = [
+            'nombre_contacto' => 'Comprador Idempotente',
+            'correo_contacto' => 'idempotente@demo.local',
+            'telefono_contacto' => '5512345678',
+            'metodo_pago' => 'tarjeta_demo',
+            'idempotency_key' => $idempotencyKey,
+            'version_carrito' => $carrito->version,
+            'total_esperado_centavos' => $totales['total_centavos'],
+            'cotizacion_hash' => $totales['cotizacion_hash'],
+        ];
+
+        // 1. Primer envío: procesa la compra
+        $firstResponse = $this->actingAs($user)->post(route('checkout.store'), $payload);
+        $pago = Pago::where('referencia', $idempotencyKey)->first();
+        $this->assertNotNull($pago);
+        $firstResponse->assertRedirect(route('pagos.confirmacion', $pago->referencia));
+
+        $this->assertDatabaseCount('ordenes_empresariales', 1);
+        $this->assertDatabaseCount('pagos', 1);
+        $this->assertDatabaseCount('movimientos_inventario', 1);
+        $this->assertSame(14, $this->producto->fresh()->stock_actual);
+
+        // El carrito quedó vacío tras completar la compra
+        $this->assertCount(0, $carrito->fresh()->detalles);
+
+        // 2. Reenvío de la misma compra ya completada (mismo payload e idempotency_key)
+        $secondResponse = $this->actingAs($user)->post(route('checkout.store'), $payload);
+        $secondResponse->assertRedirect(route('pagos.confirmacion', $pago->referencia));
+
+        // GARANTÍA: No se duplicó orden, pago ni salida de inventario
+        $this->assertDatabaseCount('ordenes_empresariales', 1);
+        $this->assertDatabaseCount('pagos', 1);
+        $this->assertDatabaseCount('movimientos_inventario', 1);
+        $this->assertSame(14, $this->producto->fresh()->stock_actual);
+    }
 }

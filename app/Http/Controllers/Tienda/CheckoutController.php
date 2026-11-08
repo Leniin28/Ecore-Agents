@@ -44,6 +44,23 @@ class CheckoutController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        // Conservar idempotencia: reenviar una compra ya completada devuelve el resultado existente sin duplicarla
+        $idempotencyKey = $request->input('idempotency_key');
+        if ($idempotencyKey && is_string($idempotencyKey)) {
+            $cliente = $request->user()?->cliente;
+            if ($cliente) {
+                $pagoExistente = Pago::query()
+                    ->where('referencia', $idempotencyKey)
+                    ->where('cliente_id', $cliente->id)
+                    ->first();
+
+                if ($pagoExistente) {
+                    return redirect()->route('pagos.confirmacion', $pagoExistente->referencia)
+                        ->with('success', '¡Compra simulada procesada exitosamente!');
+                }
+            }
+        }
+
         $validated = $request->validate([
             'nombre_contacto' => ['required', 'string', 'max:255'],
             'correo_contacto' => ['required', 'email', 'max:255'],
@@ -53,9 +70,19 @@ class CheckoutController extends Controller
             'metodo_pago' => ['required', 'string', 'in:'.implode(',', array_keys(Pago::METODOS))],
             'simular_fallo' => ['nullable', 'boolean'],
             'idempotency_key' => ['nullable', 'string', 'max:64'],
-            'version_carrito' => ['nullable', 'integer'],
-            'total_esperado_centavos' => ['nullable', 'integer'],
-            'cotizacion_hash' => ['nullable', 'string', 'max:128'],
+            'version_carrito' => ['required', 'integer', 'min:1'],
+            'total_esperado_centavos' => ['required', 'integer', 'min:0'],
+            'cotizacion_hash' => ['required', 'string', 'size:64'],
+        ], [
+            'version_carrito.required' => 'La versión del carrito es obligatoria para confirmar la compra.',
+            'version_carrito.integer' => 'La versión del carrito debe ser un número entero.',
+            'version_carrito.min' => 'La versión del carrito no es válida.',
+            'total_esperado_centavos.required' => 'El total de la cotización es obligatorio para confirmar la compra.',
+            'total_esperado_centavos.integer' => 'El total de la cotización debe ser un número entero en centavos.',
+            'total_esperado_centavos.min' => 'El total de la cotización no puede ser negativo.',
+            'cotizacion_hash.required' => 'La firma de la cotización es obligatoria para confirmar la compra.',
+            'cotizacion_hash.string' => 'La firma de la cotización debe ser una cadena de texto válida.',
+            'cotizacion_hash.size' => 'La firma de la cotización no tiene una longitud válida.',
         ]);
 
         $datosEntrega = [
@@ -77,9 +104,9 @@ class CheckoutController extends Controller
             $codigoPromocion,
             $idempotencyKey,
             $simularFallo,
-            isset($validated['version_carrito']) ? (int) $validated['version_carrito'] : null,
-            isset($validated['total_esperado_centavos']) ? (int) $validated['total_esperado_centavos'] : null,
-            $validated['cotizacion_hash'] ?? null
+            (int) $validated['version_carrito'],
+            (int) $validated['total_esperado_centavos'],
+            (string) $validated['cotizacion_hash']
         );
 
         session()->forget('carrito_promocion');

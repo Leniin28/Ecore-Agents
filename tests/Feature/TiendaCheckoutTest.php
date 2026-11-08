@@ -60,6 +60,9 @@ class TiendaCheckoutTest extends TestCase
         $carritoService = app(TiendaCarritoService::class);
         $carritoService->agregarProducto($user, $producto->id, 2);
 
+        $carrito = $carritoService->obtenerCarrito($user);
+        $totales = $carritoService->calcularTotales($carrito);
+
         $response = $this->actingAs($user)
             ->post(route('checkout.store'), [
                 'nombre_contacto' => 'Cliente Prueba',
@@ -67,6 +70,9 @@ class TiendaCheckoutTest extends TestCase
                 'telefono_contacto' => '5512345678',
                 'empresa' => 'Mi Negocio SA',
                 'metodo_pago' => 'tarjeta_demo',
+                'version_carrito' => $carrito->version,
+                'total_esperado_centavos' => $totales['total_centavos'],
+                'cotizacion_hash' => $totales['cotizacion_hash'],
             ]);
 
         $orden = OrdenEmpresarial::query()->where('cliente_id', $user->cliente->id)->first();
@@ -133,12 +139,18 @@ class TiendaCheckoutTest extends TestCase
         $carritoService = app(TiendaCarritoService::class);
         $carritoService->agregarProducto($user, $producto->id, 1);
 
+        $carrito = $carritoService->obtenerCarrito($user);
+        $totales = $carritoService->calcularTotales($carrito);
+
         $this->actingAs($user)
             ->post(route('checkout.store'), [
                 'nombre_contacto' => 'Cliente Monedero',
                 'correo_contacto' => $user->email,
                 'telefono_contacto' => '5511223344',
                 'metodo_pago' => 'monedero_demo',
+                'version_carrito' => $carrito->version,
+                'total_esperado_centavos' => $totales['total_centavos'],
+                'cotizacion_hash' => $totales['cotizacion_hash'],
             ]);
 
         $orden = OrdenEmpresarial::query()->where('cliente_id', $cliente->id)->first();
@@ -179,12 +191,18 @@ class TiendaCheckoutTest extends TestCase
         $carritoService = app(TiendaCarritoService::class);
         $carritoService->agregarProducto($user, $producto->id, 1);
 
+        $carrito = $carritoService->obtenerCarrito($user);
+        $totales = $carritoService->calcularTotales($carrito);
+
         $this->actingAs($user)
             ->post(route('checkout.store'), [
                 'nombre_contacto' => 'Cliente Pobre',
                 'correo_contacto' => $user->email,
                 'telefono_contacto' => '5511223344',
                 'metodo_pago' => 'monedero_demo',
+                'version_carrito' => $carrito->version,
+                'total_esperado_centavos' => $totales['total_centavos'],
+                'cotizacion_hash' => $totales['cotizacion_hash'],
             ])
             ->assertSessionHasErrors('metodo');
 
@@ -213,6 +231,9 @@ class TiendaCheckoutTest extends TestCase
         $carritoService = app(TiendaCarritoService::class);
         $carritoService->agregarProducto($user, $producto->id, 1);
 
+        $carrito = $carritoService->obtenerCarrito($user);
+        $totales = $carritoService->calcularTotales($carrito);
+
         $this->actingAs($user)
             ->post(route('checkout.store'), [
                 'nombre_contacto' => 'Cliente Prueba Negativa',
@@ -220,6 +241,9 @@ class TiendaCheckoutTest extends TestCase
                 'telefono_contacto' => '5511223344',
                 'metodo_pago' => 'tarjeta_demo',
                 'simular_fallo' => 1,
+                'version_carrito' => $carrito->version,
+                'total_esperado_centavos' => $totales['total_centavos'],
+                'cotizacion_hash' => $totales['cotizacion_hash'],
             ])
             ->assertSessionHasErrors('pago');
 
