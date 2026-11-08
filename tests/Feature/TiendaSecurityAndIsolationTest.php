@@ -69,9 +69,10 @@ class TiendaSecurityAndIsolationTest extends TestCase
         $clienteEmpresarial->refresh();
         $this->assertNull($clienteEmpresarial->user_id);
 
-        // El nuevo usuario tiene su propio registro de cliente seguro e independiente
+        // El nuevo usuario tiene su propio registro de cliente seguro e independiente con su correo real
         $this->assertNotNull($nuevoUsuario->cliente);
         $this->assertNotSame($clienteEmpresarial->id, $nuevoUsuario->cliente->id);
+        $this->assertSame('compras@corporativo.com', $nuevoUsuario->cliente->correo);
 
         // El nuevo usuario NO ve las órdenes del cliente empresarial
         $this->actingAs($nuevoUsuario)

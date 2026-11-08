@@ -200,8 +200,11 @@ class AuthenticationTest extends TestCase
         $this->assertNull($cliente->user_id);
     }
 
-    public function test_registration_links_existing_manually_created_cliente_by_email(): void
+    public function test_registration_does_not_hijack_existing_manually_created_cliente_by_email(): void
     {
+        // Regla de seguridad de Fase 4: La coincidencia de correo electrónico en registro público
+        // NUNCA autoriza apropiarse de un cliente CRM preexistente. Se crea un perfil de cliente
+        // independiente para el usuario registrado, y la ficha CRM previa permanece intacta con user_id null.
         $cliente = Cliente::factory()->create([
             'correo' => 'usuario@example.com',
             'estado' => Cliente::ESTADO_INACTIVO,
@@ -212,8 +215,14 @@ class AuthenticationTest extends TestCase
         $user = User::query()->where('email', 'usuario@example.com')->firstOrFail();
         $cliente->refresh();
 
-        $this->assertSame($user->id, $cliente->user_id);
-        $this->assertDatabaseCount('clientes', 1);
+        // El cliente previo NO fue apropiado
+        $this->assertNull($cliente->user_id);
+
+        // El nuevo usuario tiene su propio cliente creado con su correo auténtico
+        $this->assertNotNull($user->cliente);
+        $this->assertNotSame($cliente->id, $user->cliente->id);
+        $this->assertSame('usuario@example.com', $user->cliente->correo);
+        $this->assertDatabaseCount('clientes', 2);
     }
 
     /**
