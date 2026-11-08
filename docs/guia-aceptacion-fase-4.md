@@ -4,201 +4,225 @@
 
 ---
 
-## 1. Cuentas y roles del sistema
+## 1. Preparación de pruebas y manejo de cuentas
 
-Para ejecutar las pruebas en un entorno local con datos demo precargados (`php artisan db:seed`), se utilizan las siguientes credenciales (contraseña compartida en entorno demo local: `ECoreDemo2026!`):
+Para la realización de estas pruebas **no ejecutes `php artisan db:seed` ni `migrate:fresh`**. Los seeders pueden sobrescribir datos locales, restablecer contraseñas o reiniciar estados ya avanzados.
 
-| Rol | Correo | Módulos autorizados | Propósito de prueba |
-|---|---|---|---|
-| **Administrador** | `admin@ecore.local` | Acceso global (Admin Tienda, ERP, CRM, SCM, Auditoría) | Gestión comercial, aprobación de transferencias, vinculación CRM y ajustes de monedero |
-| **Ventas (Empleado)** | `ventas.demo@ecore.local` | CRM + ERP | Verificación de permisos y visualización de órdenes ERP |
-| **Logística (Empleado)** | `empleado.scm@ecore.local` | SCM + ERP | Consulta de stock en inventario y movimientos SCM |
-| **Cliente registrado** | Registro público en `/registro` o usuario creado con rol `cliente` | Portal del cliente (Tienda, Carrito, Mis compras, Monedero, Tickets, Perfil) | Compra de planes, uso de monedero y tickets de soporte |
+### Cómo realizar las pruebas:
+1. **Pruebas de cliente:**
+   - Registrar una cuenta propia desde la pantalla pública de registro: `GET /registro`.
+   - Proporcionar nombre, correo, teléfono de contacto y contraseña.
+   - El sistema inicia sesión automáticamente, provisiona de inmediato la ficha de cliente CRM y habilita el monedero virtual con saldo inicial $0.00 MXN.
+2. **Pruebas administrativas y de personal:**
+   - Iniciar sesión en `GET /login` con una cuenta con rol de Administrador o con los permisos modulares pertinentes (`crm`, `scm`, `erp`) que ya existan en la base local.
+   - Si se requiere una cuenta administrativa o de empleado adicional, el administrador puede crearla desde `/admin/usuarios` (o `/erp/usuarios`), donde se configuran rol, permisos y contraseña de manera auditada.
 
 ---
 
-## 2. Pruebas por objetivos del PDF académico
+## 2. Pruebas por objetivos del PDF oficial
 
-### 4.1 Catálogo comercial y tienda online
-
-#### 4.1.1 Catálogo comercial y visualización de detalles
-- **Rol:** Público (sin autenticación requerida) o Cliente autenticado.
+### 4.1.1 Catálogo
+- **Rol:** Público (invitado) o Cliente autenticado.
+- **Ruta real:** `GET /catalogo`, `GET /catalogo/{producto}` (navegando desde el listado).
 - **Pasos:**
-  1. Navegar a `/catalogo` desde el encabezado "Tienda / Catálogo".
-  2. Filtrar por categoría mediante el selector (ej. "Planes") o ingresar una palabra clave en el buscador.
-  3. Comprobar que solo se muestren productos con `visible_tienda = true`.
-  4. Hacer clic en "Ver detalles" en cualquier producto visible.
+  1. Navegar a `/catalogo` desde el enlace del menú principal "Tienda / Catálogo".
+  2. Aplicar un filtro por categoría seleccionando una opción del menú desplegable o buscar un producto mediante el campo de búsqueda por nombre o descripción.
+  3. Comprobar que en la lista solo aparezcan productos comerciales con visibilidad activa (`visible_tienda = true`) y con sus respectivas imágenes o alternativas visuales, precio de venta en MXN y distintivos de disponibilidad.
+  4. Hacer clic en "Ver detalles" de cualquier producto visible para abrir `/catalogo/{producto}`.
+  5. En la ficha de detalle, inspeccionar la descripción comercial, categoría, precio y disponibilidad de cupos.
+  6. Modificar el selector numérico de cantidad y verificar que no permita seleccionar una cantidad superior al stock actual disponible.
 - **Resultado esperado:**
-  - El catálogo responde con tarjetas responsivas, precios formateados en MXN, insignias de disponibilidad y stock.
-  - La vista de detalle `/catalogo/{producto}` muestra descripción completa, disponibilidad, precio vigente y selector de cantidad con límite según el stock actual disponible.
+  - El catálogo responde con tarjetas responsivas, filtros funcionales que conservan la paginación y precios formateados en MXN.
+  - Los recursos técnicos internos (modelos IA, capacidades internas) permanecen ocultos y protegidos fuera del catálogo comercial.
+  - El selector de cantidad bloquea compras superiores a la disponibilidad real en inventario.
 
-#### 4.1.2 Configurador comercial integrado al carrito
-- **Rol:** Cliente autenticado o visitante.
-- **Pasos:**
-  1. Ingresar a `/agente-personalizado` desde el menú principal.
-  2. Seleccionar un plan base en el selector (ej. "Agente Plus").
-  3. Marcar módulos adicionales opcionales (ej. "Agenda de citas", "Respuestas en audio").
-  4. Observar el desglose reactivo de precios por módulo.
-  5. Hacer clic en "Agregar plan configurado al carrito".
-- **Resultado esperado:**
-  - Se valida del lado del servidor que los módulos pertenezcan a la configuración oficial (`config/ecore.php`) sin aceptar importes manipulados desde el cliente.
-  - El producto se agrega al carrito con la configuración persistida y el contador de artículos del encabezado se actualiza.
-
-#### 4.1.3 Carrito persistente y cálculo formal en servidor
-- **Rol:** Cliente autenticado (o redirigido tras iniciar sesión).
-- **Pasos:**
-  1. Ir a `/carrito`.
-  2. Modificar la cantidad de una línea o eliminar un artículo.
-  3. Probar agregar el mismo plan con una configuración distinta desde `/agente-personalizado`.
-  4. Ingresar un código de promoción (si existe uno activo en administración) y hacer clic en "Aplicar".
-- **Resultado esperado:**
-  - El carrito conserva líneas independientes para configuraciones distintas del mismo plan base.
-  - El subtotal, descuento por promoción, base gravable e impuestos activos (IVA 16%) se calculan con redondeo consistente en el servidor.
-  - Se incrementa la versión interna del carrito tras cada modificación.
-
-#### 4.1.4 Checkout, cotización vinculada y detección de cambios (Quote Drift)
-- **Rol:** Cliente autenticado con artículos en el carrito.
-- **Pasos:**
-  1. En `/carrito`, hacer clic en "Continuar al checkout" para abrir `/checkout`.
-  2. Mantener abierta la pantalla de checkout. En otra pestaña del navegador con la misma cuenta, ir a `/carrito` y modificar la cantidad o eliminar un artículo.
-  3. Regresar a la pestaña original de checkout y pulsar "Confirmar y pagar compra demo".
-- **Resultado esperado:**
-  - El sistema detecta que la versión del carrito o el total esperado difieren de la cotización que el cliente estaba visualizando.
-  - La compra **no se procesa**, no se genera orden ni pago, no se descuenta inventario ni saldo de monedero.
-  - Se redirige a `/checkout` mostrando el mensaje: *"Tu carrito cambió mientras revisabas el pedido. Hemos actualizado tu resumen con los cambios recientes; por favor revísalo y confirma tu compra."*
-  - Al pulsar nuevamente con el resumen actualizado, la compra procede con éxito.
-
-#### 4.1.5 Pagos simulados con Tarjeta Demo y PayPal Demo
+### 4.1.2 Procesos de pago
 - **Rol:** Cliente autenticado.
+- **Ruta real:** `GET /checkout`, `POST /checkout`, `GET /pagos/confirmacion/{referencia}`.
 - **Pasos:**
-  1. En `/checkout`, llenar los datos de contacto y entrega (nombre, correo, teléfono).
-  2. Seleccionar el método "Tarjeta de crédito / débito (Demo)" o "PayPal (Demo)".
-  3. Hacer clic en "Confirmar y pagar compra demo".
+  1. Con al menos un artículo en el carrito, ingresar a `/checkout` ("Finalizar compra").
+  2. Completar los campos obligatorios de contacto: nombre completo, correo electrónico y teléfono.
+  3. **Prueba 1 - Tarjeta de crédito / débito (Demo):**
+     - Seleccionar "Tarjeta de crédito / débito (Demo)".
+     - Hacer clic en "Confirmar y pagar compra demo".
+     - Comprobar que la transacción se aprueba inmediatamente y redirige a `/pagos/confirmacion/{referencia}` con estado "Aprobado".
+  4. **Prueba 2 - PayPal (Demo):**
+     - Seleccionar "PayPal (Demo)" y confirmar.
+     - Comprobar la aprobación inmediata y generación del comprobante con método PayPal Demo.
+  5. **Prueba 3 - Transferencia bancaria / SPEI (Demo):**
+     - Seleccionar "Transferencia bancaria / SPEI (Demo)" y confirmar.
+     - Comprobar que la orden se genera como `pendiente`, el pago como `pendiente` y el comprobante despliega la CLABE interbancaria simulada, banco y referencia de rastreo, sin descontar stock anticipadamente.
+  6. **Prueba 4 - Simulación de rechazo de pago:**
+     - En `/checkout`, marcar la casilla *"Simular rechazo de pago (Para verificar que se revierten los cambios y no se descuenta stock)"*.
+     - Confirmar el formulario.
 - **Resultado esperado:**
-  - Transacción atómica inmediata: la orden se registra como `procesada` y el pago como `aprobado`.
-  - Redirección automática a la vista de confirmación `/pagos/confirmacion/{referencia}`.
+  - Los métodos demo operan sin solicitar datos confidenciales reales (CVV, contraseñas bancarias ni números de tarjeta reales).
+  - La simulación de rechazo aborta limpiamente la compra: devuelve un mensaje explicativo de validación, no crea registros en `ordenes_empresariales` ni en `pagos`, y no modifica el stock en inventario.
 
-#### 4.1.6 Simulación de rechazo de pago (Verificación de integridad)
-- **Rol:** Cliente autenticado en `/checkout`.
+### 4.1.3 Carrito
+- **Rol:** Cliente autenticado (o invitado que luego inicia sesión).
+- **Ruta real:** `GET /carrito`, `POST /carrito`, `PUT /carrito/{detalle}`, `DELETE /carrito/{detalle}`, `POST /carrito/vaciar`, `GET /agente-personalizado`.
 - **Pasos:**
-  1. En el formulario de `/checkout`, marcar la casilla *"Simular rechazo de pago (Para verificar que se revierten los cambios y no se descuenta stock)"*.
-  2. Enviar el formulario.
+  1. Desde `/catalogo` o la ficha de detalle, pulsar "Agregar al carrito" en cualquier plan o complemento.
+  2. Acceder a `/carrito` mediante el enlace del encabezado (que muestra el conteo persistente de artículos).
+  3. Modificar la cantidad de una línea y hacer clic en el botón de actualización.
+  4. Eliminar una línea del carrito mediante el botón de eliminar.
+  5. Abrir el configurador en `/agente-personalizado`:
+     - Seleccionar un plan base en el selector.
+     - Marcar módulos adicionales (ej. "Agenda de citas", "Respuestas en audio").
+     - Pulsar "Agregar plan configurado al carrito".
+  6. Probar agregar nuevamente el mismo plan base pero con una configuración de módulos distinta.
 - **Resultado esperado:**
-  - Se muestra error de validación indicando que el pago demo fue rechazado según lo solicitado.
-  - **No** se crea ninguna orden empresarial en la base de datos, no se crean pagos ni cargos y el inventario permanece inalterado.
+  - Carrito persistente en base de datos vinculado al cliente: los artículos se conservan al recargar o cambiar de navegador.
+  - Soporte de múltiples líneas del mismo plan base con configuraciones independientes sin sobrescribirse.
+  - El servidor calcula formalmente subtotales, descuentos, base gravable, impuestos y total general en centavos enteros con redondeo consistente.
 
----
-
-### 4.2 Integración transversal con CRM, SCM y ERP
-
-#### 4.2.1 SCM: Deducción atómica de cupos y movimientos de salida
-- **Rol:** Cliente (compra) y Empleado Logística (`empleado.scm@ecore.local` en SCM).
-- **Pasos:**
-  1. Consultar en `/scm/inventario` el stock inicial de un producto visible en tienda.
-  2. Como cliente, comprar 2 unidades de ese producto con pago inmediato simulado.
-  3. Regresar a la sesión de logística en `/scm/inventario` y `/scm/movimientos`.
-- **Resultado esperado:**
-  - El stock actual del producto se descuenta exactamente en 2 unidades.
-  - Se registra un movimiento de tipo `salida` con motivo `venta` vinculado a la orden empresarial generada.
-
-#### 4.2.2 ERP: Órdenes empresariales, precios históricos y reportes
-- **Rol:** Administrador (`admin@ecore.local`) o Empleado Ventas (`ventas.demo@ecore.local`).
-- **Pasos:**
-  1. Navegar a `/erp/ordenes` o `/erp/tienda/ordenes`.
-  2. Abrir la orden generada por la compra comercial.
-  3. Revisar en `/erp/reportes` las métricas de ventas.
-- **Resultado esperado:**
-  - La orden refleja el cliente CRM, los detalles con sus precios unitarios históricos y configuraciones particulares.
-  - Se han registrado los procesos internos correspondientes (`orden_creada`, `stock_validado`, `venta_registrada`).
-  - Las métricas y gráficas de ventas del ERP contabilizan la orden procesada sin duplicar totales.
-
-#### 4.2.3 CRM: Vinculación administrativa de clientes y soporte
-- **Rol:** Administrador (`admin@ecore.local`).
-- **Pasos:**
-  1. Crear un cliente nuevo en CRM desde `/clientes/create` (o `/erp/clientes/create`) sin asociarlo a un usuario.
-  2. Consultar la ficha del cliente en `/clientes/{cliente}` (o `/erp/clientes/{cliente}`).
-  3. Hacer clic en el botón "Vincular a usuario" para acceder a `/clientes/{cliente}/vincular`.
-  4. Seleccionar una cuenta de usuario disponible en el selector, ingresar un motivo justificado (mínimo 5 caracteres) y confirmar.
-  5. Comprobar la bitácora en `/admin/auditoria`.
-- **Resultado esperado:**
-  - La interfaz de vinculación es exclusiva para administradores (un empleado CRM recibe 403 Forbidden).
-  - La vinculación asocia el ID de usuario al cliente CRM y registra el evento `vincular_cliente_usuario` en la auditoría con el motivo ingresado.
-  - Al acceder desde el menú `/erp/clientes/...`, se mantiene intacto el contexto y la barra lateral de navegación ERP.
-
----
-
-### 4.3 Gestión administrativa de la tienda comercial
-
-#### 4.3.1 Publicación segura y edición de productos comerciales
-- **Rol:** Administrador (`admin@ecore.local`).
-- **Pasos:**
-  1. Ingresar a `/admin/tienda/productos`.
-  2. Localizar un recurso interno del sistema que no deba estar en catálogo y comprobar que `visible_tienda` está desactivado.
-  3. Para un producto comercial, hacer clic en "Editar" (`/admin/tienda/productos/{producto}/edit`).
-  4. Modificar categoría comercial, precio de venta, descripción, imagen y estado de visibilidad o destacado. Guardar.
-- **Resultado esperado:**
-  - Los recursos técnicos internos no se publican automáticamente.
-  - Las modificaciones se reflejan de inmediato en la tienda pública `/catalogo`.
-
-#### 4.3.2 Categorías normalizadas, promociones e impuestos
+### 4.1.4 Comercialización
 - **Rol:** Administrador.
+- **Ruta real:** `GET /admin/tienda/productos`, `GET /admin/tienda/productos/{producto}/edit`, `PUT /admin/tienda/productos/{producto}`, `POST /admin/tienda/productos/{producto}/toggle`, `GET /admin/tienda/promociones`, `GET /admin/tienda/categorias`.
 - **Pasos:**
-  1. Ir a `/admin/tienda/categorias` y crear o editar una categoría.
-  2. Ir a `/admin/tienda/promociones` y registrar un cupón de prueba (ej. `PROMO10` con 10% de descuento).
-  3. Ir a `/admin/tienda/impuestos` y verificar el estado del IVA o activar/desactivar impuestos aplicables.
+  1. Ingresar a `/admin/tienda/productos` desde el menú superior "Admin Tienda".
+  2. Verificar que los recursos técnicos internos del sistema no tengan activa la casilla `visible_tienda` para que no se muestren a clientes públicos.
+  3. Seleccionar un producto comercial y hacer clic en "Editar" (`/admin/tienda/productos/{producto}/edit`).
+  4. Modificar su categoría comercial, precio de venta unitario, descripción, URL de imagen, y estado de destacado o visibilidad. Guardar cambios.
+  5. Acceder a `/admin/tienda/categorias`: registrar o editar una categoría comercial normalizada.
+  6. Acceder a `/admin/tienda/promociones`: crear o consultar promociones comerciales con porcentaje de descuento o monto fijo, estableciendo fechas de vigencia y productos autorizados.
 - **Resultado esperado:**
-  - Las categorías alimentan los filtros del catálogo público.
-  - Las promociones validan fechas de vigencia y productos aplicables.
-  - Los impuestos activos se reflejan en el desglose formal del carrito y checkout.
+  - Administración segura de la oferta comercial que protege la estructura interna del SCM/ERP.
+  - Los productos modificados y las categorías normalizadas actualizan de forma inmediata el catálogo público `/catalogo`.
+  - Las promociones creadas validan su vigencia del lado del servidor al aplicarse en `/carrito`.
 
-#### 4.3.3 Flujo completo de transferencias bancarias demo (Aprobar / Rechazar)
-- **Rol:** Cliente (compra) y Administrador (confirmación/rechazo).
+### 4.1.5 Impuestos
+- **Rol:** Administrador (gestión impositiva) y Cliente (desglose transparente).
+- **Ruta real:** `GET /admin/tienda/impuestos`, `POST /admin/tienda/impuestos/{impuesto}/toggle`, `GET /carrito`, `GET /checkout`.
 - **Pasos:**
-  1. Como cliente, realizar una compra en `/checkout` seleccionando el método "Transferencia bancaria / SPEI (Demo)".
-  2. Comprobar que la orden y el pago se crean con estado `pendiente`, mostrando instrucciones y CLABE simulada sin descontar stock todavía.
-  3. Iniciar sesión como Administrador y navegar a `/admin/tienda/ordenes` (o `/erp/tienda/ordenes`).
-  4. Abrir la orden pendiente. Se visualizarán los botones "Confirmar transferencia recibida" y "Rechazar transferencia".
-  5. **Caso A (Aprobación):** Hacer clic en "Confirmar transferencia recibida".
-     - Se revalida el stock en ese momento.
-     - Pago cambia a `aprobado`, orden a `procesada`, se descuenta el stock en SCM y se registra auditoría.
-  6. **Caso B (Rechazo):** En otra transferencia pendiente, hacer clic en "Rechazar transferencia".
-     - Pago cambia a `rechazado`, orden a `cancelada`, el stock no se descuenta y se registra auditoría.
-  7. Probar confirmar o rechazar dos veces una orden ya resuelta: la acción se bloquea con aviso informativo sin duplicar movimientos.
+  1. Como administrador, ingresar a `/admin/tienda/impuestos`.
+  2. Consultar los esquemas impositivos configurados (ej. IVA 16% / 1600 puntos base) y alternar su estado activo/inactivo mediante el botón correspondiente.
+  3. Como cliente, agregar productos a `/carrito` y avanzar a `/checkout`.
+  4. Revisar la tabla de resumen de importes en el carrito y en el checkout.
 - **Resultado esperado:**
-  - Ciclo de vida completo, auditado y consistente sin desincronizaciones entre el ERP y el inventario SCM.
+  - Los impuestos se calculan estrictamente en el servidor sobre la base gravable (subtotal tras aplicar promociones vigentes).
+  - La interfaz desglosa el porcentaje aplicado, nombre del impuesto y monto exacto en centavos.
+  - El comprobante final de compra y la orden empresarial conservan el importe histórico de impuestos cobrados.
+
+### 4.1.6 Atención
+- **Rol:** Cliente (registro y consulta de tickets) y Administrador / Personal CRM (atención y resolución).
+- **Ruta real:** `GET /tickets`, `GET /tickets/crear`, `POST /tickets`, `GET /tickets/{ticket}`, `GET /admin/tienda/tickets` (o `/crm/tickets`).
+- **Pasos:**
+  1. Como cliente autenticado, ingresar a `/tickets` ("Atención") desde el menú principal.
+  2. Hacer clic en "Nuevo ticket de atención" (`/tickets/crear`), ingresar asunto, mensaje y prioridad, y enviar el formulario.
+  3. Comprobar que el ticket se registra con estado inicial "abierto" y aparece en el listado personal de soporte.
+  4. Iniciar sesión como Administrador o empleado con permiso CRM y navegar a `/admin/tienda/tickets` o `/crm/tickets`.
+  5. Abrir el ticket recibido, ingresar una respuesta de soporte y actualizar el estado ("en proceso" o "cerrado").
+  6. Como cliente, consultar `/tickets/{ticket}` para verificar la respuesta del equipo y el estado actualizado.
+- **Resultado esperado:**
+  - Canal de postventa integrado y seguro.
+  - Aislamiento estricto: cada cliente accede únicamente a sus propios tickets; los administradores y agentes CRM gestionan la bandeja unificada.
 
 ---
 
-### 4.4 Extensiones funcionales: Monedero virtual ECore
-
-#### 4.4.1 Recargas simuladas e idempotencia
-- **Rol:** Cliente autenticado.
-- **Pasos:**
-  1. Navegar a `/monedero` desde el menú del cliente.
-  2. En el panel de recarga simulada, ingresar un monto (ej. $1,000.00 MXN) y seleccionar método simulado.
-  3. Hacer clic en "Recargar saldo demo".
-  4. Comprobar que el saldo se acredita y aparece en el historial de movimientos del monedero.
-  5. Repetir la solicitud con la misma clave de idempotencia (o doble clic rápido): no se duplica la recarga.
+### 4.2 Base de datos
+- **Rol:** Verificación arquitectónica y técnica (Administrador / Desarrollador).
+- **Estructura y diseño relacional:**
+  - **Tablas de la tienda comercial:**
+    - `carritos` y `carrito_detalles`: gestión del carrito persistente por cliente, incluyendo `version` (control de concurrencia), `cantidad`, `configuracion` (JSON con desglose de módulos) y `configuracion_hash` determinista.
+    - `promociones`: cupones comerciales con código en mayúsculas, tipo de descuento (porcentaje o monto fijo), fechas de vigencia y alcance por producto.
+    - `impuestos`: esquemas tributarios configurados en puntos base enteros (`puntos_base`, ej. 1600 para 16%) para evitar imprecisiones de redondeo.
+    - `pagos`: entidad transaccional con `referencia` UUID única, método demo, importes en centavos (`subtotal_centavos`, `descuento_centavos`, `impuesto_centavos`, `total_centavos`) e inmutabilidad histórica.
+    - `monederos` y `monedero_movimientos`: saldo en centavos y bitácora auditada con clave de idempotencia (`operacion_referencia`).
+    - `tickets_atencion`: tickets de soporte vinculados al cliente CRM.
+  - **Integración con tablas de CRM, SCM y ERP:**
+    - `clientes` (CRM): clave foránea `user_id` con restricción única, auditoría de vinculación administrativa y relación con compras y tickets.
+    - `productos` y `movimientos_inventario` (SCM): campos comerciales `visible_tienda`, `destacado`, `imagen_url`, `categoria_id`, preservando el stock en cupos/paquetes y registrando salidas por venta.
+    - `ordenes_empresariales`, `orden_detalles` y `procesos_internos` (ERP): detalles con restricción única compuesta (`orden_empresarial_id` + `producto_id` + `configuracion_hash`), precios históricos y procesos operativos (`orden_creada`, `stock_validado`, `venta_registrada`).
 - **Resultado esperado:**
-  - El saldo se actualiza en centavos de forma atómica y auditable.
+  - Modelo relacional íntegro, normalizado, con claves foráneas protegidas y manejo monetario en centavos enteros para consistencia financiera.
 
-#### 4.4.2 Pago en checkout con saldo del monedero
-- **Rol:** Cliente autenticado con saldo suficiente en monedero.
-- **Pasos:**
-  1. Agregar productos al carrito y proceder a `/checkout`.
-  2. Seleccionar la opción "Monedero virtual ECore".
-  3. Confirmar la compra.
-- **Resultado esperado:**
-  - El total se debita exactamente del saldo del monedero.
-  - Se registra el movimiento de débito en `monedero_movimientos` vinculado a la orden.
-  - La orden y el pago se procesan inmediatamente.
+---
 
-#### 4.4.3 Ajuste administrativo de monederos por soporte
-- **Rol:** Administrador (`admin@ecore.local`).
+### 4.3 Registro y autenticación
+- **Rol:** Visitante / Nuevo usuario y Administrador.
+- **Ruta real:** `GET /registro`, `POST /registro`, `GET /login`, `POST /login`, `POST /logout`, `GET /perfil`.
 - **Pasos:**
-  1. Entrar a `/admin/tienda/monederos`.
-  2. Seleccionar el monedero del cliente (`/admin/tienda/monederos/{monedero}`).
-  3. Ingresar un ajuste (crédito o débito) con motivo justificado (ej. "Bonificación demo por resolución de ticket #12").
-  4. Guardar ajuste.
+  1. En el menú público, hacer clic en "Registro" (`/registro`).
+  2. Ingresar nombre completo, correo electrónico, teléfono y contraseña (mínimo 8 caracteres con mayúscula, minúscula, número y símbolo). Enviar.
+  3. Comprobar que tras el registro exitoso se inicia la sesión y se redirige a `/perfil`.
+  4. Constatar que el menú superior ahora muestra las opciones del cliente: "Tienda / Catálogo", "Personalizado", "Carrito", "Mis compras", "Monedero", "Atención" y "Perfil".
+  5. Probar cerrar sesión mediante "Cerrar sesión" (`POST /logout`).
+  6. Iniciar sesión en `/login` con las credenciales creadas.
+  7. Probar registrarse con un correo que coincida con un cliente CRM preexistente: comprobar que el sistema crea un cliente nuevo para el usuario web y **no usurpa** la ficha previa ni expone interacciones o saldos confidenciales.
 - **Resultado esperado:**
-  - El saldo se actualiza, se registra el movimiento tipo `ajuste` y queda constancia en la bitácora de auditoría.
+  - Autenticación robusta basada en sesiones nativas de Laravel.
+  - Control de acceso por roles (`cliente`, `empleado`, `admin`) con middlewares de autorización en todas las rutas privadas.
+  - Protección estricta contra secuestro de cuentas CRM durante el registro público.
+
+---
+
+## 3. Extensiones y funcionalidades adicionales (Ampliaciones académicas)
+
+Las siguientes funcionalidades complementan los objetivos del PDF y enriquecen la solución sin alterar los títulos numerados del curso:
+
+### Extensión A: Monedero virtual ECore
+- **Rol:** Cliente (recargas y pagos) y Administrador (ajustes auditados).
+- **Rutas reales:** `GET /monedero`, `POST /monedero/recargar`, `POST /checkout`, `GET /admin/tienda/monederos`, `POST /admin/tienda/monederos/{monedero}/ajustar`.
+- **Pasos:**
+  1. Como cliente, entrar a `/monedero`.
+  2. Solicitar una recarga simulada ingresando el monto (ej. $1,000.00 MXN) y método de abono demo.
+  3. Verificar que el saldo se actualiza y aparece en el historial de movimientos.
+  4. En `/checkout`, seleccionar "Monedero virtual ECore" para pagar una compra utilizando el saldo acumulado.
+  5. Como administrador, acceder a `/admin/tienda/monederos`, seleccionar un monedero y aplicar un ajuste justificado (crédito o débito con motivo de al menos 5 caracteres).
+- **Resultado esperado:**
+  - Idempotencia en recargas garantizada por `operacion_referencia`.
+  - Débito atómico del total cotizado al confirmar compras con monedero.
+  - Ajustes administrativos auditados en la bitácora general del sistema.
+
+### Extensión B: Control estricto de cotización y versión del carrito (Quote Drift)
+- **Rol:** Cliente en proceso de compra.
+- **Rutas reales:** `GET /checkout`, `POST /checkout`.
+- **Pasos:**
+  1. Abrir `/checkout` con artículos cotizados.
+  2. En otra pestaña del navegador, modificar las cantidades del carrito o simular un cambio administrativo en precios o impuestos.
+  3. En la pestaña original de checkout, enviar la confirmación de compra.
+- **Resultado esperado:**
+  - El endpoint exige de forma obligatoria `version_carrito`, `total_esperado_centavos` y `cotizacion_hash`.
+  - Si los campos están ausentes, nulos o con formato inválido, la solicitud es rechazada inmediatamente.
+  - Si se detecta un desfase entre la cotización mostrada y los importes vigentes, se aborta la operación con cero efectos secundarios (sin órdenes, pagos, salidas de inventario ni cargos al monedero).
+  - Se redirige al checkout con un mensaje de advertencia y los importes actualizados para solicitar una confirmación consciente del usuario.
+  - Si se reenvía una compra ya completada con el mismo `idempotency_key`, devuelve el comprobante existente sin duplicar registros.
+
+### Extensión C: Cierre administrativo de transferencias bancarias demo
+- **Rol:** Administrador.
+- **Rutas reales:** `GET /admin/tienda/ordenes`, `GET /admin/tienda/ordenes/{pago}`, `POST /admin/tienda/ordenes/{pago}/confirmar-transferencia`, `POST /admin/tienda/ordenes/{pago}/rechazar-transferencia`.
+- **Pasos:**
+  1. Consultar una orden generada mediante transferencia demo con estado `pendiente`.
+  2. Abrir la orden desde `/admin/tienda/ordenes/{pago}` (o `/erp/tienda/ordenes/{pago}`).
+  3. **Caso de confirmación:** Pulsar "Confirmar transferencia recibida". Revalida el stock en ese momento, cambia pago a `aprobado`, orden a `procesada`, ejecuta la salida de inventario SCM y registra auditoría.
+  4. **Caso de rechazo:** En otra transferencia pendiente, pulsar "Rechazar transferencia". Pago cambia a `rechazado`, orden a `cancelada`, el stock no se descuenta y se audita el evento.
+- **Resultado esperado:**
+  - Flujo administrativo completo, protegido y con revalidación de stock en el momento de la confirmación.
+
+### Extensión D: Vinculación administrativa explícita de clientes CRM
+- **Rol:** Administrador.
+- **Rutas reales:** `GET /clientes/{cliente}/vincular` (o `/erp/clientes/{cliente}/vincular`), `POST /clientes/{cliente}/vincular`.
+- **Pasos:**
+  1. En el directorio de clientes CRM (`/clientes` o `/erp/clientes`), seleccionar un cliente que no cuente con usuario vinculado.
+  2. Hacer clic en "Vincular a usuario" (`/clientes/{cliente}/vincular`).
+  3. Seleccionar la cuenta de usuario en el menú desplegable, escribir el motivo administrativo (mínimo 5 caracteres) y confirmar.
+- **Resultado esperado:**
+  - Acceso restringido exclusivamente a administradores (403 para otros roles).
+  - Bloqueo de vinculaciones incompatibles (clientes ya vinculados o usuarios con otro cliente asignado).
+  - Registro de auditoría con fecha, usuario y justificación.
+  - Preservación del layout y contexto ERP cuando se ejecuta desde `/erp/clientes/...`.
+
+### Extensión E: Integración transversal con SCM y ERP
+- **Rol:** Empleados de Logística (`empleado.scm@ecore.local`) y Ventas (`ventas.demo@ecore.local`).
+- **Rutas reales:** `/scm/inventario`, `/scm/movimientos`, `/erp/ordenes`, `/erp/reportes`.
+- **Pasos:**
+  1. Consultar el inventario inicial en `/scm/inventario`.
+  2. Realizar una compra comercial en la tienda.
+  3. Revisar en `/scm/movimientos` la salida automática por venta y la actualización del stock.
+  4. Consultar en `/erp/reportes` la contabilización de la venta en la fecha de procesamiento de la orden.
+- **Resultado esperado:**
+  - Reducción exacta del stock en cupos comerciales sin discrepancias con el SCM.
+  - Registro de procesos internos ERP (`orden_creada`, `stock_validado`, `venta_registrada`).
+  - Reportes de ventas consistentes que no contabilizan órdenes canceladas ni pendientes.
