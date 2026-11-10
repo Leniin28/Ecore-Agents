@@ -110,6 +110,7 @@ h1, h2, h3 { color: var(--blue-dark); }
 .plan-price small { color: #44506a; font-size: .92rem; font-weight: 500; }
 .old-price { margin-right: 8px; color: #59657a; font-size: 1rem; font-weight: 500; text-decoration: line-through; }
 .promotion-pill { width: fit-content; margin: 18px 0 -8px; padding: 7px 11px; color: #8f4e0e; background: #fff4dd; border: 1px solid #f2d7a6; border-radius: 999px; font-size: .74rem; font-weight: 900; }
+.plan-pricing .promotion-pill { display: block; max-width: 100%; margin: 8px 0 0; line-height: 1.4; overflow-wrap: anywhere; border-radius: 12px; }
 .plan-summary { color: var(--muted); line-height: 1.65; }
 .feature-list { padding-left: 0; display: grid; gap: 10px; list-style: none; }
 .feature-list li { position: relative; padding-left: 26px; color: #334159; line-height: 1.5; }
