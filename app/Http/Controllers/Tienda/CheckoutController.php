@@ -115,6 +115,14 @@ class CheckoutController extends Controller
             ->with('success', '¡Compra simulada procesada exitosamente!');
     }
 
+    public function correoDemo(Request $request, string $referencia): RedirectResponse
+    {
+        $this->confirmacion($request, $referencia);
+
+        return redirect()->route('pagos.confirmacion', $referencia)
+            ->with('success', 'Envío simulado. No se envió ningún correo real.');
+    }
+
     public function confirmacion(Request $request, string $referencia): View
     {
         $pago = Pago::query()

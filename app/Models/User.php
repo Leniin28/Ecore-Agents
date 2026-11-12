@@ -35,7 +35,7 @@ class User extends Authenticatable
 
     public const MODULES = [self::MODULE_CRM, self::MODULE_SCM, self::MODULE_ERP];
 
-    public const PERFILES = ['ventas' => 'Ventas', 'logistica' => 'Logística'];
+    public const PERFILES = ['ventas' => 'Ventas', 'logistica' => 'Logística', 'soporte' => 'Soporte / atención al cliente'];
 
     public function isAdmin(): bool
     {

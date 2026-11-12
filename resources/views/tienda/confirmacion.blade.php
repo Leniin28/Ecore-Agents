@@ -47,6 +47,15 @@
             </div>
         </div>
 
+        <details class="checkout-card" style="margin-bottom:24px;padding:20px">
+            <summary><strong>Ver correo de confirmación simulado</strong></summary>
+            <p><strong>Para:</strong> {{ auth()->user()->email }}<br>
+                <strong>Asunto:</strong> Comprobante de compra {{ $orden->folio() }}</p>
+            <p>Recibimos tu orden {{ $orden->folio() }}. Estado del pago: {{ $pago->estadoLabel() }}.<br>
+                Método: {{ $pago->metodoLabel() }} · Total: {{ $pago->total_formateado }}</p>
+            <p>Este correo es una simulación académica y no se ha enviado a una dirección real.</p>
+            <form method="post" action="{{ route('pagos.correo-demo', $pago->referencia) }}">@csrf<button class="button" type="submit">Simular envío del comprobante</button></form>
+        </details>
         <h3 style="margin:0 0 14px;font-size:1.2rem">Desglose de la compra</h3>
         <div class="table-responsive" style="margin-bottom:24px">
             <table class="cart-table">

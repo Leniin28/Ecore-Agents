@@ -3,7 +3,9 @@
 
 @section('content')
 <div class="admin-layout">
-    @if(request()->routeIs('crm.*'))
+    @if(request()->routeIs('soporte.*'))
+        <aside class="admin-sidebar"><strong>Soporte</strong><p>Atención al cliente</p></aside>
+    @elseif(request()->routeIs('crm.*'))
         @include('admin._sidebar')
     @else
         @include('admin.tienda._sidebar')
@@ -78,7 +80,7 @@
                                 {{ $tck->respondidoPor->name ?? 'Pendiente' }}
                             </td>
                             <td style="text-align:right">
-                                <a class="button" href="{{ request()->routeIs('crm.*') ? route('crm.tickets.show', $tck) : route('admin.tienda.tickets.show', $tck) }}" style="padding:6px 12px;min-height:36px;font-size:.85rem">
+                                <a class="button" href="{{ request()->routeIs('soporte.*') ? route('soporte.tickets.show', $tck) : (request()->routeIs('crm.*') ? route('crm.tickets.show', $tck) : route('admin.tienda.tickets.show', $tck)) }}" style="padding:6px 12px;min-height:36px;font-size:.85rem">
                                     Responder / Atender
                                 </a>
                             </td>

@@ -23,6 +23,9 @@
                     <a href="{{ route('register') }}" @if(request()->routeIs('register')) aria-current="page" @endif>Registro</a>
                 @endguest
                 @auth
+                    @if(auth()->user()->isEmployee() && auth()->user()->perfil_empresarial === 'soporte')
+                        <a href="{{ route('soporte.tickets.index') }}">Soporte</a>
+                    @endif
                     @if(auth()->user()->isClient())
                         <a href="{{ route('mis-compras.index') }}" @if(request()->routeIs('mis-compras.*')) aria-current="page" @endif>Mis compras</a>
                         <a href="{{ route('monedero.index') }}" @if(request()->routeIs('monedero.*')) aria-current="page" @endif>Monedero</a>

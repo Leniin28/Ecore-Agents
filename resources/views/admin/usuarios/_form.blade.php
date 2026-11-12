@@ -63,7 +63,7 @@
         profileField.hidden = roleSelector.value !== 'usuario';
     };
     document.querySelector('[data-profile-selector]').addEventListener('change', (event) => {
-        const suggested = { ventas: ['crm', 'erp'], logistica: ['scm', 'erp'] }[event.target.value];
+        const suggested = { ventas: ['crm', 'erp'], logistica: ['scm', 'erp'], soporte: [] }[event.target.value];
         if (suggested) permissions.querySelectorAll('input').forEach(input => input.checked = suggested.includes(input.value));
     });
     roleSelector.addEventListener('change', refreshPermissions);

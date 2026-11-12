@@ -3,7 +3,9 @@
 
 @section('content')
 <div class="admin-layout">
-    @if(request()->routeIs('crm.*'))
+    @if(request()->routeIs('soporte.*'))
+        <aside class="admin-sidebar"><strong>Soporte</strong><p>Atención al cliente</p></aside>
+    @elseif(request()->routeIs('crm.*'))
         @include('admin._sidebar')
     @else
         @include('admin.tienda._sidebar')
@@ -11,7 +13,7 @@
 
     <section class="admin-content">
         <div style="margin-bottom:20px">
-            <a class="back-button" href="{{ request()->routeIs('crm.*') ? route('crm.tickets.index') : route('admin.tienda.tickets.index') }}">
+            <a class="back-button" href="{{ request()->routeIs('soporte.*') ? route('soporte.tickets.index') : (request()->routeIs('crm.*') ? route('crm.tickets.index') : route('admin.tienda.tickets.index')) }}">
                 &larr; Volver a la lista de tickets
             </a>
         </div>
@@ -41,9 +43,7 @@
                     @if($ticket->ordenEmpresarial)
                         <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #cbd5e1">
                             <strong>Compra asociada:</strong>
-                            <a href="{{ route('admin.tienda.ordenes.show', $ticket->ordenEmpresarial->pago ?? $ticket->ordenEmpresarial->id) }}" style="color:var(--blue);font-weight:700">
-                                {{ $ticket->ordenEmpresarial->folio() }} (${{ number_format((float) $ticket->ordenEmpresarial->total, 2) }} MXN)
-                            </a>
+                            {{ $ticket->ordenEmpresarial->folio() }} (${{ number_format((float) $ticket->ordenEmpresarial->total, 2) }} MXN)
                         </div>
                     @endif
                 </div>
@@ -70,9 +70,9 @@
                 <h2 style="margin:4px 0 16px;font-size:1.3rem">Responder al cliente</h2>
 
                 @php
-                    $actionRoute = request()->routeIs('crm.*')
+                    $actionRoute = request()->routeIs('soporte.*') ? route('soporte.tickets.responder', $ticket) : (request()->routeIs('crm.*')
                         ? route('crm.tickets.responder', $ticket)
-                        : route('admin.tienda.tickets.responder', $ticket);
+                        : route('admin.tienda.tickets.responder', $ticket));
                 @endphp
 
                 <form method="post" action="{{ $actionRoute }}" style="display:grid;gap:16px">

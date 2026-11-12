@@ -76,6 +76,8 @@ Route::middleware('guest')->group(function () {
 
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->middleware('throttle:6,1');
+    Route::get('/recuperar-contrasena', [\App\Http\Controllers\Auth\DemoPasswordResetController::class, 'create'])->name('password.demo');
+    Route::post('/recuperar-contrasena', [\App\Http\Controllers\Auth\DemoPasswordResetController::class, 'store'])->middleware('throttle:6,1')->name('password.demo.store');
 });
 
 Route::middleware('auth')->group(function () {
@@ -83,6 +85,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
     Route::get('/pagos/confirmacion/{referencia}', [CheckoutController::class, 'confirmacion'])->name('pagos.confirmacion');
+    Route::post('/pagos/confirmacion/{referencia}/correo-demo', [CheckoutController::class, 'correoDemo'])->name('pagos.correo-demo');
 
     Route::get('/mis-compras', [MisComprasController::class, 'index'])->name('mis-compras.index');
     Route::get('/mis-compras/{orden}', [MisComprasController::class, 'show'])->name('mis-compras.show');
@@ -94,6 +97,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/tickets/crear', [TicketController::class, 'create'])->name('tickets.create');
     Route::post('/tickets', [TicketController::class, 'store'])->name('tickets.store');
     Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
+
+    Route::prefix('soporte')->name('soporte.')->middleware(\App\Http\Middleware\EnsureSupportAccess::class)->group(function () {
+        Route::get('/tickets', [TicketAdminController::class, 'index'])->name('tickets.index');
+        Route::get('/tickets/{ticket}', [TicketAdminController::class, 'show'])->name('tickets.show');
+        Route::post('/tickets/{ticket}/responder', [TicketAdminController::class, 'responder'])->name('tickets.responder');
+    });
 
     Route::prefix('erp')->name('erp.')->middleware('module:erp')->group(function () {
         // Mismas operaciones y tablas, presentadas dentro del área ERP.

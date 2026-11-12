@@ -25,6 +25,12 @@
             </p>
         </div>
 
+        <details style="margin-bottom:24px;padding:16px;border:1px solid var(--line);border-radius:12px">
+            <summary><strong>Ver correo simulado del ticket</strong></summary>
+            <p><strong>Para:</strong> {{ auth()->user()->email }}<br><strong>Asunto:</strong> Ticket {{ $ticket->folio() }} recibido</p>
+            <p>Recibimos tu solicitud «{{ $ticket->asunto }}». Estado: {{ $ticket->estadoLabel() }}.</p>
+            <p>Es una simulación; no se ha enviado un correo real.</p>
+        </details>
         <!-- Conversación -->
         <div class="ticket-chat">
             <!-- Mensaje original del cliente -->

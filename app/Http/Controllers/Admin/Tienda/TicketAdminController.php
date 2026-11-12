@@ -63,7 +63,9 @@ class TicketAdminController extends Controller
             "Respondió al ticket {$ticket->folio()} del cliente {$ticket->cliente->nombre} (nuevo estado: {$ticket->estadoLabel()})."
         );
 
-        return redirect()->route('admin.tienda.tickets.show', $ticket)
+        $route = $request->routeIs('soporte.*') ? 'soporte.tickets.show' : ($request->routeIs('crm.*') ? 'crm.tickets.show' : 'admin.tienda.tickets.show');
+
+        return redirect()->route($route, $ticket)
             ->with('success', "Respuesta registrada y ticket actualizado a '{$ticket->estadoLabel()}'.");
     }
 }
