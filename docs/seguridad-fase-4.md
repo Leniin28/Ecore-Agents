@@ -4,6 +4,4 @@ El PDF solicita correo único, contraseñas protegidas, manejo de sesión o toke
 
 El perfil empresarial Soporte puede atender tickets desde su propio panel. Sus permisos adicionales de CRM, SCM o ERP se asignan por separado. Los clientes solo consultan sus propios tickets y comprobantes. Las acciones de atención se registran en auditoría.
 
-Los comprobantes de correo mostrados son simulaciones locales: no existe entrega de correo ni pasarela de pago real. Para un despliegue real faltaría evaluar, entre otros, HTTPS, configuración de cookies y secretos, recuperación y verificación de cuentas, segundo factor, correo confiable y una revisión de seguridad independiente.
-
-La recuperación de contraseña académica está habilitada solo cuando `APP_ENV=local` y permite cambiar una contraseña conociendo únicamente el correo: no verifica la identidad y no es segura para un sistema publicado. Debe sustituirse por un enlace temporal de un solo uso enviado por un canal verificado antes de cualquier despliegue.
+La recuperación usa un código enviado por correo, con caducidad de 15 minutos, un solo uso y límite de intentos. Verifica el acceso al correo durante la recuperación; no es autenticación de dos factores para el inicio de sesión. Los pagos permanecen simulados. Para un despliegue real se debe evaluar HTTPS, cookies, secretos, verificación de cuentas, segundo factor de inicio de sesión y una revisión de seguridad independiente.
