@@ -37,6 +37,11 @@ class User extends Authenticatable
 
     public const PERFILES = ['ventas' => 'Ventas', 'logistica' => 'Logística', 'soporte' => 'Soporte / atención al cliente'];
 
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new \App\Notifications\ResetPasswordNotification($token));
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === self::ROLE_ADMIN;

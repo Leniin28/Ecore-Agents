@@ -11,17 +11,21 @@ class SupportAndRememberTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_demo_password_reset_only_works_in_local_environment(): void
+    public function test_password_reset_requires_valid_single_use_email_token(): void
     {
+        \Illuminate\Support\Facades\Notification::fake();
         $user = User::factory()->create(['password' => 'original123']);
-        $data = ['email' => $user->email, 'password' => 'nueva12345', 'password_confirmation' => 'nueva12345'];
-        $this->post(route('password.demo.store'), $data)->assertNotFound();
-        $this->app['env'] = 'local';
-        $data['_token'] = 'test-token';
-        $this->withSession(['_token' => 'test-token']);
-        $this->post(route('password.demo.store'), $data)->assertRedirect(route('login'));
+        $this->post(route('password.email'), ['email' => $user->email])->assertSessionHas('status');
+        \Illuminate\Support\Facades\Notification::assertSentTo($user, \App\Notifications\ResetPasswordNotification::class, function ($notification) use ($user) {
+            $data = ['email' => $user->email, 'password' => 'nueva12345', 'password_confirmation' => 'nueva12345', 'code' => $notification->token === '123456' ? '123457' : '123456'];
+            $this->post(route('password.update'), $data)->assertSessionHasErrors('email');
+            $data['code'] = $notification->token;
+            $this->post(route('password.update'), $data)->assertRedirect(route('login'));
+            $this->post(route('password.update'), $data)->assertSessionHasErrors('email');
+            return true;
+        });
         $this->assertTrue(\Illuminate\Support\Facades\Hash::check('nueva12345', $user->fresh()->password));
-        $this->post(route('password.demo.store'), array_merge($data, ['email' => 'ausente@example.com']))->assertSessionHasErrors('email');
+        $this->post(route('password.email'), ['email' => 'ausente@example.com'])->assertSessionHas('status');
     }
 
     public function test_remember_me_sets_a_remember_cookie(): void
@@ -31,6 +35,18 @@ class SupportAndRememberTest extends TestCase
         $response->assertRedirect(route('profile'));
         $this->assertNotNull($user->fresh()->getRememberToken());
         $this->assertNotEmpty(array_filter($response->headers->getCookies(), fn ($cookie) => str_starts_with($cookie->getName(), 'remember_')));
+    }
+
+    public function test_expired_and_exhausted_codes_cannot_reset_password(): void
+    {
+        $user = User::factory()->create(['password' => 'original123']);
+        $entry = ['email' => $user->email, 'code_hash' => \Illuminate\Support\Facades\Hash::make('123456'), 'attempts' => 0, 'created_at' => now()->subMinutes(16)];
+        \Illuminate\Support\Facades\DB::table('password_reset_codes')->insert($entry);
+        $data = ['email' => $user->email, 'password' => 'nueva12345', 'password_confirmation' => 'nueva12345', 'code' => '123456'];
+        $this->post(route('password.update'), $data)->assertSessionHasErrors('email');
+        \Illuminate\Support\Facades\DB::table('password_reset_codes')->where('email', $user->email)->update(['created_at' => now(), 'attempts' => 5]);
+        $this->post(route('password.update'), $data)->assertSessionHasErrors('email');
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('original123', $user->fresh()->password));
     }
 
     public function test_support_can_answer_tickets_without_access_to_other_modules(): void

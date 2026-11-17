@@ -76,8 +76,10 @@ Route::middleware('guest')->group(function () {
 
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
     Route::post('/login', [AuthenticatedSessionController::class, 'store'])->middleware('throttle:6,1');
-    Route::get('/recuperar-contrasena', [\App\Http\Controllers\Auth\DemoPasswordResetController::class, 'create'])->name('password.demo');
-    Route::post('/recuperar-contrasena', [\App\Http\Controllers\Auth\DemoPasswordResetController::class, 'store'])->middleware('throttle:6,1')->name('password.demo.store');
+    Route::get('/recuperar-contrasena', [\App\Http\Controllers\Auth\PasswordResetController::class, 'requestForm'])->name('password.request');
+    Route::post('/recuperar-contrasena', [\App\Http\Controllers\Auth\PasswordResetController::class, 'sendLink'])->middleware('throttle:6,1')->name('password.email');
+    Route::get('/restablecer-contrasena', [\App\Http\Controllers\Auth\PasswordResetController::class, 'resetForm'])->name('password.reset');
+    Route::post('/restablecer-contrasena', [\App\Http\Controllers\Auth\PasswordResetController::class, 'reset'])->middleware('throttle:6,1')->name('password.update');
 });
 
 Route::middleware('auth')->group(function () {
@@ -85,7 +87,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
     Route::get('/pagos/confirmacion/{referencia}', [CheckoutController::class, 'confirmacion'])->name('pagos.confirmacion');
-    Route::post('/pagos/confirmacion/{referencia}/correo-demo', [CheckoutController::class, 'correoDemo'])->name('pagos.correo-demo');
+    Route::post('/pagos/confirmacion/{referencia}/correo', [CheckoutController::class, 'enviarComprobante'])->middleware('throttle:6,1')->name('pagos.correo');
 
     Route::get('/mis-compras', [MisComprasController::class, 'index'])->name('mis-compras.index');
     Route::get('/mis-compras/{orden}', [MisComprasController::class, 'show'])->name('mis-compras.show');

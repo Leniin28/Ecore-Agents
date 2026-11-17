@@ -111,16 +111,38 @@ class CheckoutController extends Controller
 
         session()->forget('carrito_promocion');
 
+        $sent = $this->mandarComprobante($resultado['pago'], $request->user()->email);
+
         return redirect()->route('pagos.confirmacion', $resultado['pago']->referencia)
-            ->with('success', '¡Compra simulada procesada exitosamente!');
+            ->with($sent ? 'success' : 'warning', $sent
+                ? 'Compra simulada procesada. El comprobante fue aceptado por el servicio de correo.'
+                : 'Compra simulada procesada. El comprobante no se pudo enviar; revisa la configuración de correo.');
     }
 
-    public function correoDemo(Request $request, string $referencia): RedirectResponse
+    public function enviarComprobante(Request $request, string $referencia): RedirectResponse
     {
-        $this->confirmacion($request, $referencia);
+        $view = $this->confirmacion($request, $referencia);
+        $pago = $view->getData()['pago'];
+        $email = $pago->cliente->user?->email;
+        $sent = $email && $this->mandarComprobante($pago, $email);
 
         return redirect()->route('pagos.confirmacion', $referencia)
-            ->with('success', 'Envío simulado. No se envió ningún correo real.');
+            ->with($sent ? 'success' : 'warning', $sent ? 'El comprobante fue aceptado por el servicio de correo.' : 'No se pudo enviar el comprobante; revisa la configuración de correo.');
+    }
+
+    private function mandarComprobante(Pago $pago, string $email): bool
+    {
+        if (in_array(config('mail.default'), ['log', 'array', 'failover'], true) && ! app()->runningUnitTests()) {
+            return false;
+        }
+        try {
+            $pago->loadMissing('ordenEmpresarial');
+            \Illuminate\Support\Facades\Mail::to($email)->send(new \App\Mail\ComprobanteCompra($pago));
+            return true;
+        } catch (\Throwable $e) {
+            report($e);
+            return false;
+        }
     }
 
     public function confirmacion(Request $request, string $referencia): View

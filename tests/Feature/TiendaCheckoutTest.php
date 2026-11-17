@@ -43,6 +43,7 @@ class TiendaCheckoutTest extends TestCase
 
     public function test_complete_end_to_end_purchase_with_card_updates_scm_crm_and_erp(): void
     {
+        \Illuminate\Support\Facades\Mail::fake();
         $user = User::factory()->create(['role' => User::ROLE_CLIENTE]);
 
         $producto = Producto::create([
@@ -85,6 +86,11 @@ class TiendaCheckoutTest extends TestCase
         $this->assertSame('tarjeta_demo', $pago->metodo);
 
         $response->assertRedirect(route('pagos.confirmacion', $pago->referencia));
+        \Illuminate\Support\Facades\Mail::assertSent(\App\Mail\ComprobanteCompra::class, fn ($mail) => $mail->hasTo($user->email) && $mail->pago->id === $pago->id);
+        $this->assertStringContainsString('Agente Plus Demo', (new \App\Mail\ComprobanteCompra($pago->load('ordenEmpresarial')))->render());
+        $other = User::factory()->create(['role' => User::ROLE_CLIENTE]);
+        $this->actingAs($other)->post(route('pagos.correo', $pago->referencia))->assertForbidden();
+        $this->actingAs($user)->post(route('pagos.correo', $pago->referencia))->assertRedirect();
 
         // 1. SCM: Stock se decrementó de 20 a 18
         $producto->refresh();

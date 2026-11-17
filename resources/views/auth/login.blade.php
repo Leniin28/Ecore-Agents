@@ -24,9 +24,7 @@
                 <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" name="remember" value="1" @checked(old('remember'))> Recuérdame</label>
                 <button class="button" type="submit">Entrar</button>
             </form>
-            @if(app()->environment('local'))
-                <p class="auth-link"><a href="{{ route('password.demo') }}">¿Olvidaste tu contraseña?</a></p>
-            @endif
+            <p class="auth-link"><a href="{{ route('password.request') }}">¿Olvidaste tu contraseña?</a></p>
             <p class="auth-link">¿Aún no tienes cuenta? <a href="{{ route('register') }}">Crear una cuenta</a></p>
         </article>
     </section>
